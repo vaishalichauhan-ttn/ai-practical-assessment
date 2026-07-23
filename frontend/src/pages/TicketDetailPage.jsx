@@ -60,6 +60,46 @@ function StatusSelect({
   );
 }
 
+function AssigneeSelect({
+  id,
+  label,
+  value,
+  users,
+  onChange,
+  disabled,
+  loading,
+  error,
+  describedById,
+}) {
+  return (
+    <div className="ticket-meta-item form-field">
+      <label htmlFor={id}>{label}</label>
+      <select
+        id={id}
+        name="assignedTo"
+        value={value}
+        onChange={onChange}
+        disabled={disabled || loading}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? describedById : undefined}
+      >
+        <option value={UNASSIGNED_VALUE}>Unassigned</option>
+        {users.map((user) => (
+          <option key={user.id} value={user.id}>
+            {user.name}
+          </option>
+        ))}
+      </select>
+      {loading && <p className="muted">Loading assignees...</p>}
+      {error && (
+        <p id={describedById} className="field-error">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function getStatusErrorMessage(err) {
   if (!(err instanceof ApiError)) {
     return null;
@@ -95,6 +135,8 @@ function TicketDetailPage() {
   const [usersError, setUsersError] = useState("");
   const [statusError, setStatusError] = useState("");
   const [statusSubmitting, setStatusSubmitting] = useState(false);
+  const [assigneeError, setAssigneeError] = useState("");
+  const [assigneeSubmitting, setAssigneeSubmitting] = useState(false);
   const [commentMessage, setCommentMessage] = useState("");
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -117,6 +159,7 @@ function TicketDetailPage() {
       setUsers([]);
       setUsersError("");
       setStatusError("");
+      setAssigneeError("");
       setComments([]);
       setCommentsLoading(true);
       setCommentsError("");
@@ -125,9 +168,10 @@ function TicketDetailPage() {
       setCommentFieldError("");
 
       try {
-        const [ticketResult, commentsResult] = await Promise.allSettled([
+        const [ticketResult, commentsResult, usersResult] = await Promise.allSettled([
           getTicket(id),
           listComments(id),
+          listUsers(),
         ]);
 
         if (cancelled) {
@@ -156,6 +200,17 @@ function TicketDetailPage() {
               err instanceof ApiError
                 ? err.message || "Failed to load comments."
                 : "Failed to load comments. Please try again."
+            );
+          }
+
+          if (usersResult.status === "fulfilled") {
+            setUsers(usersResult.value);
+          } else {
+            const err = usersResult.reason;
+            setUsersError(
+              err instanceof ApiError
+                ? err.message || "Failed to load assignees."
+                : "Failed to load assignees. Please try again."
             );
           }
         }
@@ -330,6 +385,40 @@ function TicketDetailPage() {
     }
   }
 
+  async function handleAssigneeChange(nextAssigneeId) {
+    const currentAssigneeId = ticket.assignedTo?.id ?? UNASSIGNED_VALUE;
+    if (!ticket || nextAssigneeId === currentAssigneeId) {
+      return;
+    }
+
+    setAssigneeError("");
+    setAssigneeSubmitting(true);
+
+    const assignedTo =
+      nextAssigneeId === UNASSIGNED_VALUE ? null : nextAssigneeId;
+
+    try {
+      const updated = await updateTicket(id, { assignedTo });
+      setTicket((current) => ({
+        ...current,
+        ...updated,
+      }));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const assigneeDetail = err.details.find(
+          (detail) => detail.field === "assignedTo"
+        );
+        setAssigneeError(
+          assigneeDetail?.message || err.message || "Failed to update assignee"
+        );
+      } else {
+        setAssigneeError("Failed to update assignee. Please try again.");
+      }
+    } finally {
+      setAssigneeSubmitting(false);
+    }
+  }
+
   async function handleAddComment(event) {
     event.preventDefault();
     setCommentError("");
@@ -493,14 +582,22 @@ function TicketDetailPage() {
               describedById="view-status-error"
             />
 
+            <AssigneeSelect
+              id="view-assignee"
+              label="Assignee"
+              value={ticket.assignedTo?.id ?? UNASSIGNED_VALUE}
+              users={users}
+              onChange={(event) => handleAssigneeChange(event.target.value)}
+              disabled={assigneeSubmitting}
+              loading={usersLoading}
+              error={assigneeError || usersError}
+              describedById="view-assignee-error"
+            />
+
             <dl className="ticket-meta-list">
               <div className="ticket-meta-item">
                 <dt>Priority</dt>
                 <dd>{ticket.priority}</dd>
-              </div>
-              <div className="ticket-meta-item">
-                <dt>Assignee</dt>
-                <dd>{ticket.assignedTo?.name ?? "Unassigned"}</dd>
               </div>
               <div className="ticket-meta-item">
                 <dt>Created By</dt>
@@ -608,39 +705,19 @@ function TicketDetailPage() {
               )}
             </div>
 
-            <div className="form-field">
-              <label htmlFor="edit-assignee">Assignee</label>
-              <select
-                id="edit-assignee"
-                name="assignedTo"
-                value={form.assignedTo}
-                onChange={(event) =>
-                  updateField("assignedTo", event.target.value)
-                }
-                disabled={usersLoading}
-                aria-invalid={Boolean(fieldErrors.assignedTo || usersError)}
-                aria-describedby={
-                  fieldErrors.assignedTo || usersError
-                    ? "edit-assignee-error"
-                    : undefined
-                }
-              >
-                <option value={UNASSIGNED_VALUE}>Unassigned</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
-              {usersLoading && (
-                <p className="muted">Loading assignees...</p>
-              )}
-              {(usersError || fieldErrors.assignedTo) && (
-                <p id="edit-assignee-error" className="field-error">
-                  {fieldErrors.assignedTo || usersError}
-                </p>
-              )}
-            </div>
+            <AssigneeSelect
+              id="edit-assignee"
+              label="Assignee"
+              value={form.assignedTo}
+              users={users}
+              onChange={(event) =>
+                updateField("assignedTo", event.target.value)
+              }
+              disabled={submitting}
+              loading={usersLoading}
+              error={fieldErrors.assignedTo || usersError}
+              describedById="edit-assignee-error"
+            />
 
             <div className="form-actions ticket-sidebar-actions">
               <button type="submit" disabled={submitting}>

@@ -71,37 +71,42 @@ describe("TicketDetailPage", () => {
     listComments.mockImplementation(
       () => new Promise(() => {})
     );
+    listUsers.mockImplementation(
+      () => new Promise(() => {})
+    );
 
     renderDetailPage();
 
     expect(screen.getByText(/loading ticket/i)).toBeInTheDocument();
-    expect(listUsers).not.toHaveBeenCalled();
+    expect(listUsers).toHaveBeenCalled();
   });
 
-  it("renders ticket details in a two-column layout without loading users", async () => {
+  it("renders ticket details in a two-column layout with assignee dropdown", async () => {
     renderDetailPage();
 
     expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
     expect(screen.getByText("User reports 401 error.")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
-    expect(screen.getByText("Unassigned")).toBeInTheDocument();
+    expect(screen.getByLabelText(/assignee/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue("");
     expect(screen.getByLabelText(/^status$/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^comments$/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/add a comment/i)).toBeInTheDocument();
     expect(listComments).toHaveBeenCalledWith(mockTicket.id);
+    expect(listUsers).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /edit ticket/i })).toBeInTheDocument();
-    expect(listUsers).not.toHaveBeenCalled();
   });
 
-  it("loads users when entering edit mode", async () => {
+  it("loads users when entering edit mode if initial load failed", async () => {
     const user = userEvent.setup();
+    listUsers.mockRejectedValueOnce(new ApiError(500, "Internal server error"));
     renderDetailPage();
 
     await screen.findByText("Cannot log in");
     await user.click(screen.getByRole("button", { name: /edit ticket/i }));
 
     await waitFor(() => {
-      expect(listUsers).toHaveBeenCalledTimes(1);
+      expect(listUsers).toHaveBeenCalledTimes(2);
     });
     expect(screen.getByLabelText(/assignee/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^status$/i)).toBeInTheDocument();
@@ -147,7 +152,7 @@ describe("TicketDetailPage", () => {
     expect(await screen.findByText("Updated title")).toBeInTheDocument();
     expect(screen.getByText("Updated description")).toBeInTheDocument();
     expect(screen.getByText("Critical")).toBeInTheDocument();
-    expect(screen.getByText("Bob Smith")).toBeInTheDocument();
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue(mockUsers[1].id);
   });
 
   it("includes status in save payload when changed in edit mode", async () => {
@@ -181,7 +186,7 @@ describe("TicketDetailPage", () => {
     });
   });
 
-  it("supports unassigning a ticket", async () => {
+  it("supports unassigning a ticket from the view dropdown", async () => {
     const user = userEvent.setup();
     getTicket.mockResolvedValue({
       ...mockTicket,
@@ -195,10 +200,37 @@ describe("TicketDetailPage", () => {
 
     renderDetailPage();
 
-    await screen.findByText("Bob Smith");
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/assignee/i), "");
+
+    await waitFor(() => {
+      expect(updateTicket).toHaveBeenCalledWith(mockTicket.id, {
+        assignedTo: null,
+      });
+    });
+
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue("");
+  });
+
+  it("supports unassigning a ticket from edit mode", async () => {
+    const user = userEvent.setup();
+    getTicket.mockResolvedValue({
+      ...mockTicket,
+      assignedTo: { id: mockUsers[1].id, name: mockUsers[1].name },
+    });
+    updateTicket.mockResolvedValue({
+      ...mockTicket,
+      assignedTo: null,
+      updatedAt: "2026-07-23T10:00:00.000Z",
+    });
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue(mockUsers[1].id);
     await user.click(screen.getByRole("button", { name: /edit ticket/i }));
     await waitFor(() => {
-      expect(listUsers).toHaveBeenCalled();
+      expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
     });
     await user.selectOptions(screen.getByLabelText(/assignee/i), "");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -212,7 +244,46 @@ describe("TicketDetailPage", () => {
       });
     });
 
-    expect(await screen.findByText("Unassigned")).toBeInTheDocument();
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue("");
+  });
+
+  it("changes ticket assignee via dropdown and updates the displayed assignee", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockResolvedValue({
+      ...mockTicket,
+      assignedTo: { id: mockUsers[1].id, name: mockUsers[1].name },
+      updatedAt: "2026-07-23T10:00:00.000Z",
+    });
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/assignee/i), mockUsers[1].id);
+
+    await waitFor(() => {
+      expect(updateTicket).toHaveBeenCalledWith(mockTicket.id, {
+        assignedTo: mockUsers[1].id,
+      });
+    });
+
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue(mockUsers[1].id);
+  });
+
+  it("displays API error when assignee update fails", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockRejectedValue(
+      new ApiError(400, "Validation failed", [
+        { field: "assignedTo", message: "Invalid assignee" },
+      ])
+    );
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/assignee/i), mockUsers[1].id);
+
+    expect(await screen.findByText("Invalid assignee")).toBeInTheDocument();
+    expect(screen.getByLabelText(/assignee/i)).toHaveValue("");
   });
 
   it("cancels editing and returns to read-only view", async () => {
@@ -271,18 +342,13 @@ describe("TicketDetailPage", () => {
   });
 
   it("shows targeted error when assignee list fails to load", async () => {
-    const user = userEvent.setup();
     listUsers.mockRejectedValue(new ApiError(500, "Internal server error"));
 
     renderDetailPage();
 
-    await screen.findByText("Cannot log in");
-    expect(screen.getByText("Cannot log in")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /edit ticket/i }));
-
+    expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
     expect(await screen.findByText("Internal server error")).toBeInTheDocument();
-    expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/assignee/i)).toBeInTheDocument();
   });
 
   it("shows not found message for missing tickets", async () => {
@@ -292,7 +358,6 @@ describe("TicketDetailPage", () => {
     renderDetailPage();
 
     expect(await screen.findByText("Ticket not found.")).toBeInTheDocument();
-    expect(listUsers).not.toHaveBeenCalled();
   });
 
   it("disables invalid status options based on the current status", async () => {
