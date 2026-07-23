@@ -180,6 +180,36 @@ a:hover {
   white-space: nowrap;
 }
 
+.ticket-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+}
+
+.ticket-filters__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ticket-filters__actions button {
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #2563eb;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .ticket-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
 .empty-state {
   padding: 2rem 1.5rem;
   border: 1px solid #cbd5e1;

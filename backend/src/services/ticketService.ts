@@ -12,9 +12,14 @@ import {
 } from "../mappers/ticketMapper.js";
 import { ticketRepository } from "../repositories/ticketRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
-import type { CreateTicketInput, UpdateTicketInput } from "../types/ticket.js";
+import type {
+  CreateTicketInput,
+  ListTicketsQuery,
+  UpdateTicketInput,
+} from "../types/ticket.js";
 import {
   validateCreateTicketInput,
+  validateListTicketsQuery,
   validateUpdateTicketInput,
 } from "../validators/ticketValidators.js";
 import { validateStatusTransition } from "../validators/statusTransitionValidator.js";
@@ -58,8 +63,33 @@ export const ticketService = {
     return toTicketDto(ticket);
   },
 
-  async list() {
-    const tickets = await ticketRepository.findAll();
+  /**
+   * Lists tickets with optional keyword search and status filter.
+   *
+   * @param query Optional search and status query parameters.
+   * @returns Ticket summary DTOs matching all applied filters.
+   * @throws ValidationError When an invalid status value is provided.
+   */
+  async list(query: ListTicketsQuery = {}) {
+    const details = validateListTicketsQuery(query);
+    if (details.length > 0) {
+      throw new ValidationError("Validation failed", details);
+    }
+
+    const filters: { search?: string; status?: TicketStatus } = {};
+
+    if (query.search !== undefined) {
+      const normalizedSearch = query.search.trim();
+      if (normalizedSearch.length > 0) {
+        filters.search = normalizedSearch;
+      }
+    }
+
+    if (query.status !== undefined && query.status.trim() !== "") {
+      filters.status = STATUS_API_TO_PRISMA[query.status as ApiTicketStatus];
+    }
+
+    const tickets = await ticketRepository.findAll(filters);
     return tickets.map(toTicketSummaryDto);
   },
 

@@ -1,5 +1,10 @@
-import type { Priority, TicketStatus } from "@prisma/client";
+import type { Priority, Prisma, TicketStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
+
+export interface ListTicketsFilters {
+  search?: string;
+  status?: TicketStatus;
+}
 
 export interface CreateTicketData {
   title: string;
@@ -35,8 +40,22 @@ export const ticketRepository = {
     });
   },
 
-  async findAll() {
+  async findAll(filters: ListTicketsFilters = {}) {
+    const where: Prisma.TicketWhereInput = {};
+
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    if (filters.search) {
+      where.OR = [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+
     return prisma.ticket.findMany({
+      where,
       include: ticketInclude,
       orderBy: { createdAt: "desc" },
     });

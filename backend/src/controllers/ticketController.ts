@@ -2,7 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import type { Priority } from "@prisma/client";
 import { NotFoundError } from "../errors/AppError.js";
 import { ticketService } from "../services/ticketService.js";
-import type { CreateTicketInput, UpdateTicketInput } from "../types/ticket.js";
+import type {
+  CreateTicketInput,
+  ListTicketsQuery,
+  UpdateTicketInput,
+} from "../types/ticket.js";
 
 export async function createTicket(
   req: Request,
@@ -31,12 +35,19 @@ export async function createTicket(
 }
 
 export async function listTickets(
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const tickets = await ticketService.list();
+    const query: ListTicketsQuery = {
+      search:
+        typeof req.query.search === "string" ? req.query.search : undefined,
+      status:
+        typeof req.query.status === "string" ? req.query.status : undefined,
+    };
+
+    const tickets = await ticketService.list(query);
     res.status(200).json(tickets);
   } catch (error) {
     next(error);

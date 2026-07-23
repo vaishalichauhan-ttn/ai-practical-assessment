@@ -15,6 +15,11 @@ export interface UpdateTicketInput {
   status?: string;
 }
 
+export interface ListTicketsQuery {
+  search?: string;
+  status?: string;
+}
+
 export interface UserRefDto {
   id: string;
   name: string;

@@ -7,7 +7,11 @@ import {
   type ApiTicketStatus,
 } from "../constants/ticket.js";
 import type { ErrorDetail } from "../errors/AppError.js";
-import type { CreateTicketInput, UpdateTicketInput } from "../types/ticket.js";
+import type {
+  CreateTicketInput,
+  ListTicketsQuery,
+  UpdateTicketInput,
+} from "../types/ticket.js";
 
 export const TICKET_UPDATE_FIELDS = [
   "title",
@@ -193,6 +197,27 @@ export function validateUpdateTicketInput(
 
   if ("status" in body) {
     const statusError = validateStatus(input.status);
+    if (statusError) {
+      details.push(statusError);
+    }
+  }
+
+  return details;
+}
+
+/**
+ * Validates list tickets query parameters.
+ *
+ * @param query Parsed list tickets query.
+ * @returns Collected field validation errors.
+ */
+export function validateListTicketsQuery(
+  query: ListTicketsQuery
+): ErrorDetail[] {
+  const details: ErrorDetail[] = [];
+
+  if (query.status !== undefined && query.status.trim() !== "") {
+    const statusError = validateStatus(query.status);
     if (statusError) {
       details.push(statusError);
     }

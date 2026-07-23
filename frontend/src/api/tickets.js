@@ -1,12 +1,26 @@
 import { apiRequest } from "./client.js";
 
 /**
- * Fetches all tickets from the API.
+ * Fetches tickets from the API with optional search and status filters.
  *
+ * @param filters Optional search keyword and status filter.
  * @returns Promise resolving to the list of ticket summaries.
  */
-export function listTickets() {
-  return apiRequest("/api/tickets");
+export function listTickets(filters = {}) {
+  const params = new URLSearchParams();
+
+  if (filters.search) {
+    params.set("search", filters.search);
+  }
+
+  if (filters.status) {
+    params.set("status", filters.status);
+  }
+
+  const query = params.toString();
+  const path = query ? `/api/tickets?${query}` : "/api/tickets";
+
+  return apiRequest(path);
 }
 
 /**

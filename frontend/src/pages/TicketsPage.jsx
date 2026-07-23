@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client.js";
 import { listTickets } from "../api/tickets.js";
 import CreateTicketModal from "../components/CreateTicketModal.jsx";
+import { TICKET_STATUSES } from "../constants/ticket.js";
 import { formatDate } from "../utils/formatDate.js";
 
 function toListItem(ticket) {
@@ -17,19 +18,39 @@ function toListItem(ticket) {
   };
 }
 
+function readFiltersFromParams(searchParams) {
+  return {
+    search: searchParams.get("search") ?? "",
+    status: searchParams.get("status") ?? "",
+  };
+}
+
 function TicketsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState(
+    () => searchParams.get("search") ?? ""
+  );
+  const [statusFilter, setStatusFilter] = useState(
+    () => searchParams.get("status") ?? ""
+  );
+
+  const filters = readFiltersFromParams(searchParams);
+  const hasActiveFilters = Boolean(filters.search || filters.status);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const data = await listTickets();
+      const data = await listTickets({
+        search: filters.search || undefined,
+        status: filters.status || undefined,
+      });
       setTickets(data);
     } catch (err) {
       setTickets([]);
@@ -41,11 +62,47 @@ function TicketsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters.search, filters.status]);
 
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+    setStatusFilter(filters.status);
+  }, [filters.search, filters.status]);
+
+  function applyFilters(nextSearch, nextStatus) {
+    const params = new URLSearchParams();
+
+    if (nextSearch.trim()) {
+      params.set("search", nextSearch.trim());
+    }
+
+    if (nextStatus) {
+      params.set("status", nextStatus);
+    }
+
+    setSearchParams(params, { replace: false });
+  }
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    applyFilters(searchInput, statusFilter);
+  }
+
+  function handleStatusChange(event) {
+    const nextStatus = event.target.value;
+    setStatusFilter(nextStatus);
+    applyFilters(searchInput, nextStatus);
+  }
+
+  function handleClearFilters() {
+    setSearchInput("");
+    setStatusFilter("");
+    setSearchParams({}, { replace: false });
+  }
 
   function handleTicketCreated(ticket) {
     setTickets((current) => [toListItem(ticket), ...current]);
@@ -75,13 +132,55 @@ function TicketsPage() {
           </button>
         </div>
 
+        <form className="ticket-filters" onSubmit={handleSearchSubmit}>
+          <div className="form-field ticket-filters__search">
+            <label htmlFor="ticket-search">Search</label>
+            <input
+              id="ticket-search"
+              type="search"
+              placeholder="Search by title or description"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
+          </div>
+
+          <div className="form-field ticket-filters__status">
+            <label htmlFor="ticket-status-filter">Status</label>
+            <select
+              id="ticket-status-filter"
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
+              <option value="">All statuses</option>
+              {TICKET_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ticket-filters__actions">
+            <button type="submit">Search</button>
+            {hasActiveFilters && (
+              <button type="button" className="button-secondary" onClick={handleClearFilters}>
+                Clear filters
+              </button>
+            )}
+          </div>
+        </form>
+
         {loading && <p className="muted">Loading tickets...</p>}
 
         {!loading && error && <p className="form-error-banner">{error}</p>}
 
         {!loading && !error && tickets.length === 0 && (
           <div className="empty-state">
-            <p className="muted">No tickets yet.</p>
+            <p className="muted">
+              {hasActiveFilters
+                ? "No tickets match your filters."
+                : "No tickets yet."}
+            </p>
           </div>
         )}
 
