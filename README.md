@@ -426,6 +426,18 @@ Architecture: **Controllers → Services → Repositories → PostgreSQL**. Fron
 - **Tests need Docker Postgres** (or equivalent) on `localhost:5432` with credentials matching `.env.example`. Backend tests use `support_tickets_test`, not the app database.
 - **Further reading:** [`implementation-plan.md`](implementation-plan.md), [`tool-specific/cursor-workflow/project-context.md`](tool-specific/cursor-workflow/project-context.md), [`acceptance-criteria.md`](acceptance-criteria.md).
 
+## Screenshots / Demo Notes
+
+Screenshots showing are added in `/demo-screenshots` folder:
+
+- Ticket List page
+- Create Ticket modal
+- Ticket Details page
+- Ticket assignment
+- Status transitions
+- Comments
+- Search and filtering
+- Swagger documentation
 
 ## Future Enhancements
 

@@ -95,7 +95,7 @@ Reusable Cursor Rules and Cursor Commands were used to maintain consistent imple
 
 ## Screenshots / Demo Notes
 
-Include screenshots or demonstration material showing:
+Screenshots showing are added in /demo-screenshots folder:
 
 - Ticket List page
 - Create Ticket modal
@@ -104,8 +104,8 @@ Include screenshots or demonstration material showing:
 - Status transitions
 - Comments
 - Search and filtering
-- Swagger/OpenAPI documentation
-- Backend and frontend test execution
+- Swagger documentation
+
 
 ---
 
