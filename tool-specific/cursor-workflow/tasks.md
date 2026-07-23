@@ -46,8 +46,8 @@ This document breaks the implementation into sequential, incremental tasks. Comp
 | **Type** | BE / FE |
 | **Objective** | Set up a two-folder structure (`backend/`, `frontend/`) with TypeScript backend, JavaScript React frontend, linting, and npm scripts for development and build. |
 | **Dependencies** | None |
-| **Deliverables** | `backend/` and `frontend/` directories; TypeScript config for backend; JavaScript/React setup for frontend (`.jsx` files, no TypeScript); lint/format setup; root or per-package `package.json` scripts (`dev`, `build`, `test`). |
-| **Completion criteria** | Backend compiles without errors; frontend builds and runs without TypeScript; `npm run dev` (or equivalent) starts backend and frontend; folder structure supports layered architecture (controllers, services, repositories). |
+| **Deliverables** | `backend/` and `frontend/` directories; TypeScript config for backend; JavaScript/React setup for frontend (`.jsx` files, no TypeScript); lint/format setup; root or per-package `package.json` scripts (`dev`, `build`, `test`); frontend Vitest + React Testing Library setup. |
+| **Completion criteria** | Backend compiles without errors; frontend builds and runs without TypeScript; `npm run dev` (or equivalent) starts backend and frontend; `npm run test` runs backend and frontend test suites; folder structure supports layered architecture (controllers, services, repositories). |
 
 ---
 
@@ -125,7 +125,7 @@ This document breaks the implementation into sequential, incremental tasks. Comp
 | **Objective** | Create the React + Vite + JavaScript frontend with routing shell and a reusable API client utility. |
 | **Dependencies** | 0.1 |
 | **Deliverables** | Vite React app (`.jsx` components, no TypeScript); router with placeholder routes; API client module (base URL, JSON headers, error parsing); placeholder home page. |
-| **Completion criteria** | Frontend builds and loads in browser; router navigates between placeholder pages; API client can call `GET /api/health` successfully. |
+| **Completion criteria** | Frontend builds and loads in browser; router navigates between placeholder pages; API client can call `GET /api/health` successfully; Vitest + React Testing Library configured with at least one passing sample test. |
 
 ---
 
@@ -138,7 +138,7 @@ This document breaks the implementation into sequential, incremental tasks. Comp
 | **Objective** | Verify the foundation stack works end-to-end before feature development. |
 | **Dependencies** | 0.5 |
 | **Deliverables** | Smoke/integration test(s) for app startup and health endpoint. |
-| **Completion criteria** | Test suite runs; health endpoint test passes against test DB; CI or local `npm test` succeeds for foundation checks. |
+| **Completion criteria** | Test suite runs; health endpoint test passes against test DB; frontend Vitest suite passes; CI or local `npm test` succeeds for foundation checks. |
 
 ---
 
@@ -957,7 +957,8 @@ A feature is complete when:
 - [ ] Backend endpoint(s) implemented with validation and correct HTTP status codes
 - [ ] Database changes migrated and seeded where needed
 - [ ] Frontend screen(s) wired to API with error display
-- [ ] Integration test(s) cover happy path and key failure cases
+- [ ] Backend integration test(s) cover happy path and key failure cases
+- [ ] Frontend automated test(s) cover user-visible behavior where applicable
 - [ ] No regressions in previously delivered phases
 
 ---

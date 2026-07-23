@@ -16,6 +16,8 @@ This document summarizes the authoritative acceptance criteria into a concise ch
 | Database | PostgreSQL |
 | ORM / migrations | Prisma |
 | Frontend | React + JavaScript + Vite (no TypeScript) |
+| Testing (backend) | Vitest + Supertest (API integration tests) |
+| Testing (frontend) | Vitest + React Testing Library (component/UI tests) |
 
 ---
 
@@ -151,7 +153,9 @@ This document summarizes the authoritative acceptance criteria into a concise ch
 
 ### Testing (CRUD)
 
-- [ ] Ticket CRUD functionality is tested.
+- [ ] Ticket CRUD functionality is tested (backend integration tests).
+- [ ] Frontend test suite runs via `npm run test -w frontend`.
+- [ ] Component and utility tests use Vitest + React Testing Library.
 
 ### Documentation
 
@@ -176,7 +180,7 @@ Use these prompts at milestone boundaries to confirm nothing was missed:
 | M4 | Allowed transitions succeed; disallowed transitions return 400 with clear UI message |
 | M5 | Add comment → appears chronologically; comment on missing ticket returns 404 |
 | M6 | Keyword search, status filter, and combined search+filter all return correct results |
-| M7 | All integration tests pass; README, API docs, and setup instructions are complete |
+| M7 | All backend integration and frontend tests pass; README, API docs, and setup instructions are complete |
 
 ---
 
@@ -187,8 +191,9 @@ A feature is done when all of the following are true:
 1. Backend endpoint(s) enforce validation and return correct HTTP status codes.
 2. Database changes are migrated and seeded where needed.
 3. Frontend is wired to the API and surfaces errors clearly.
-4. Integration test(s) cover the happy path and key failure cases.
-5. No regressions in previously completed milestones.
+4. Backend integration test(s) cover the happy path and key failure cases.
+5. Frontend automated test(s) cover user-visible behavior where applicable.
+6. No regressions in previously completed milestones.
 
 **Never defer:** status transition tests, backend validation, seed data, README setup instructions.
 

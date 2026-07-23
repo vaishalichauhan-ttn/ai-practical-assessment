@@ -52,7 +52,7 @@ Do not implement unless explicitly added to acceptance criteria:
 | ORM / migrations | Prisma |
 | Frontend | React + JavaScript + Vite (no TypeScript) |
 | API | REST + JSON |
-| Testing | Jest/Vitest + Supertest (integration tests) |
+| Testing | Vitest + Supertest (backend integration tests); Vitest + React Testing Library (frontend component/UI tests) |
 | API docs | OpenAPI (Swagger) |
 
 Alternatives (e.g., Django, Spring Boot) are acceptable if layered architecture and business-rule enforcement are preserved.
@@ -108,10 +108,12 @@ Delivery follows vertical slices (DB + API + UI + tests per milestone). Critical
 
 ## Testing Expectations
 
-- **Integration tests (required):** Valid and invalid status transitions; ticket CRUD; comment add/list; search and filter (alone and combined).
-- **Unit tests (recommended):** `StatusTransitionValidator` transition matrix.
-- **Per-feature DoD:** Endpoint with validation + migrated DB + wired UI + happy-path and key failure tests + no regressions.
+- **Backend integration tests (required):** Valid and invalid status transitions; ticket CRUD; comment add/list; search and filter (alone and combined).
+- **Frontend tests (required):** Vitest + React Testing Library for components, routing, and UI states; mock API modules.
+- **Unit tests (recommended):** `StatusTransitionValidator` transition matrix; shared frontend utilities.
+- **Per-feature DoD:** Endpoint with validation + migrated DB + wired UI + backend and frontend tests where applicable + no regressions.
 - **Test with real HTTP layer** — Supertest against running API, not mocked business rules for integration coverage.
+- **Test frontend UI with React Testing Library** — Vitest + jsdom for component rendering, routing, and error display; mock API client modules.
 - **Never defer:** Status transition tests, backend validation, seed data.
 
 ## Documentation Expectations
