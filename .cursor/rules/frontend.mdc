@@ -1,0 +1,48 @@
+---
+alwaysApply: false
+---
+
+# Frontend Rules
+
+## Technology
+
+- Use React + JavaScript + Vite.
+- Do not introduce TypeScript.
+- Use React Router.
+- Use functional components and hooks.
+
+## Architecture
+c
+- Keep pages under `pages/`.
+- Keep reusable UI in `components/`.
+- Keep API logic in `api/client.js`.
+- Keep business logic out of UI components.
+
+## State
+
+- Use local component state.
+- Do not use Redux or Zustand.
+
+## API
+
+- Use the shared API client for all HTTP requests.
+- Handle API errors consistently.
+
+## Validation
+
+- Show backend validation errors.
+- Do not enforce business rules in the frontend.
+
+## Security
+
+- Never use `dangerouslySetInnerHTML`.
+- Render user input safely.
+
+## Scope
+
+Do not generate:
+- About pages
+- Authentication
+- User management
+- Pagination
+- Features outside the specification.

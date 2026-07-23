@@ -1,0 +1,40 @@
+---
+alwaysApply: false
+---
+
+# Database Rules
+
+## Technology
+
+- Use PostgreSQL as the database.
+- Use Prisma ORM for schema, migrations, and database access.
+- Never commit `.env` secrets.
+
+## Schema Changes
+
+- Make all schema changes through Prisma migrations.
+- Never edit the database manually.
+- Regenerate the Prisma client after schema changes.
+
+## Data Access
+
+- Access the database only through the Repository layer.
+- Do not query Prisma directly from controllers or services.
+- Never use raw SQL with user input.
+- Use parameterized Prisma queries.
+
+## Data Integrity
+
+- Enforce business rules in the service layer.
+- Use Prisma constraints for foreign keys and enums.
+- Keep referential integrity intact.
+
+## Seed Data
+
+- Maintain seed users for development and testing.
+- Update the seed script when schema changes affect required data.
+
+## General
+
+- Follow the database design documented in `design-notes.md`.
+- Follow the API contracts in `spec.md`.

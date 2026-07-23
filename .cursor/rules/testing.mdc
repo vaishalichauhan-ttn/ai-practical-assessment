@@ -1,0 +1,48 @@
+# Testing Rules
+
+## Framework
+
+- Use Vitest for testing.
+- Use Supertest for backend API integration tests.
+- Use React Testing Library for frontend component and UI tests.
+- Test through the Express application rather than individual controllers.
+
+## General
+
+- Write tests when implementing each feature.
+- Every new endpoint must include integration tests.
+- Frontend components and utilities should include automated tests where behavior is non-trivial.
+- Cover both successful and failure scenarios.
+- Do not mock business logic in integration tests.
+- Keep tests independent and repeatable.
+
+## Unit Tests
+
+- Unit test pure utility modules.
+- Status transition validation should have exhaustive unit tests.
+
+## Backend Integration Tests
+
+- Test complete request → response behavior.
+- Verify HTTP status codes and response bodies.
+- Verify database persistence where applicable.
+
+## Frontend Tests
+
+- Use React Testing Library to test rendered UI and user-visible behavior.
+- Prefer queries by role, label, or accessible name over implementation details.
+- Mock API modules when testing components that fetch data.
+- Keep frontend tests focused on presentation, routing, and error display — business rules remain backend-tested.
+
+## Test Environment
+
+- Use a separate test database for backend integration tests.
+- Seed required data before backend tests.
+- Clean up data between backend tests.
+- Frontend tests run in jsdom via Vitest; no database required.
+
+## Quality
+
+- Do not disable failing tests.
+- Maintain existing test coverage.
+- Run regression tests before completing a feature.

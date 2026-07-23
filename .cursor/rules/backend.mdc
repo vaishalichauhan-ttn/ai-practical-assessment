@@ -1,0 +1,51 @@
+---
+alwaysApply: false
+---
+
+# Backend Rules
+
+## Architecture
+
+- Follow the layered architecture:
+  Routes → Controllers → Services → Repositories → Prisma → PostgreSQL
+- Controllers handle only HTTP concerns.
+- Services contain business logic.
+- Repositories contain all Prisma queries.
+- Never access Prisma directly from controllers.
+
+## Project Structure
+
+- Keep controllers, services, repositories, middleware, validators, and routes in separate modules.
+- Keep validation reusable and isolated.
+
+## API
+
+- Return JSON responses only.
+- Use consistent error responses through the global error handler.
+- Throw custom application errors instead of generic errors.
+
+## Business Logic
+
+- Keep all business rules in the service layer.
+- Keep status transition logic in a dedicated validator.
+- Treat the backend as the source of truth.
+
+## Validation
+
+- Validate all client input on the backend.
+- Never rely on frontend validation alone.
+
+## Database
+
+- Access data only through repositories.
+- Never use raw SQL with user input.
+
+## Scope
+
+Do not implement:
+- Authentication
+- Authorization
+- User CRUD
+- Pagination
+- Audit logs
+- Features outside the specification.

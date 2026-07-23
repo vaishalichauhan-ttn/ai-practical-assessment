@@ -1,0 +1,18 @@
+---
+alwaysApply: true
+---
+
+# Documentation Rules
+
+- Add JSDoc comments only where they improve code readability.
+- Document exported functions, classes, controllers, services, repositories, and middleware with non-trivial logic.
+- Do not add JSDoc to simple getters, setters, or obvious private helper functions.
+- Use the following format:
+
+/**
+ * Brief description of what the function does.
+ *
+ * @param paramName Description of the parameter.
+ * @returns Description of the return value.
+ * @throws ErrorType When applicable.
+ */
