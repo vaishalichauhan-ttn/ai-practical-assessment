@@ -30,13 +30,7 @@ export interface TicketSummaryDto {
   updatedAt: string;
 }
 
-export interface CommentDto {
-  id: string;
-  message: string;
-  createdBy: UserRefDto;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { CommentDto } from "./comment.js";
 
 export interface TicketDto {
   id: string;
@@ -48,8 +42,4 @@ export interface TicketDto {
   createdBy: UserRefDto;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface TicketDetailDto extends TicketDto {
-  comments: CommentDto[];
 }

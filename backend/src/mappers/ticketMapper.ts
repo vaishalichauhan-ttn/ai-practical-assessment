@@ -2,7 +2,6 @@ import type { Comment, Priority, Ticket, User } from "@prisma/client";
 import { STATUS_PRISMA_TO_API } from "../constants/ticket.js";
 import type {
   CommentDto,
-  TicketDetailDto,
   TicketDto,
   TicketSummaryDto,
   UserRefDto,
@@ -15,10 +14,6 @@ type TicketWithRelations = Ticket & {
 
 type CommentWithCreator = Comment & {
   creator: Pick<User, "id" | "name">;
-};
-
-type TicketWithComments = TicketWithRelations & {
-  comments: CommentWithCreator[];
 };
 
 function toUserRef(user: Pick<User, "id" | "name">): UserRefDto {
@@ -54,19 +49,12 @@ export function toTicketSummaryDto(ticket: TicketWithRelations): TicketSummaryDt
   };
 }
 
-function toCommentDto(comment: CommentWithCreator): CommentDto {
+export function toCommentDto(comment: CommentWithCreator): CommentDto {
   return {
     id: comment.id,
     message: comment.message,
     createdBy: toUserRef(comment.creator),
     createdAt: comment.createdAt.toISOString(),
     updatedAt: comment.updatedAt.toISOString(),
-  };
-}
-
-export function toTicketDetailDto(ticket: TicketWithComments): TicketDetailDto {
-  return {
-    ...toTicketDto(ticket),
-    comments: ticket.comments.map(toCommentDto),
   };
 }

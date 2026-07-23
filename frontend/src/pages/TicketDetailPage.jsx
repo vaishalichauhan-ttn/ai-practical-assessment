@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../api/client.js";
-import { getTicket, updateTicket } from "../api/tickets.js";
+import { getTicket, updateTicket, addComment, listComments } from "../api/tickets.js";
 import { listUsers } from "../api/users.js";
 import { PRIORITY_OPTIONS, TICKET_STATUSES, isStatusOptionEnabled } from "../constants/ticket.js";
+import { MESSAGE_MAX_LENGTH } from "../constants/comment.js";
 import { formatDate } from "../utils/formatDate.js";
 
 const UNASSIGNED_VALUE = "";
@@ -94,6 +95,13 @@ function TicketDetailPage() {
   const [usersError, setUsersError] = useState("");
   const [statusError, setStatusError] = useState("");
   const [statusSubmitting, setStatusSubmitting] = useState(false);
+  const [commentMessage, setCommentMessage] = useState("");
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentsError, setCommentsError] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [commentFieldError, setCommentFieldError] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,23 +117,52 @@ function TicketDetailPage() {
       setUsers([]);
       setUsersError("");
       setStatusError("");
+      setComments([]);
+      setCommentsLoading(true);
+      setCommentsError("");
+      setCommentMessage("");
+      setCommentError("");
+      setCommentFieldError("");
 
       try {
-        const ticketData = await getTicket(id);
-        if (!cancelled) {
-          setTicket(ticketData);
+        const [ticketResult, commentsResult] = await Promise.allSettled([
+          getTicket(id),
+          listComments(id),
+        ]);
+
+        if (cancelled) {
+          return;
         }
-      } catch (err) {
-        if (!cancelled) {
+
+        if (ticketResult.status === "rejected") {
+          const err = ticketResult.reason;
           if (err instanceof ApiError && err.status === 404) {
             setError("Ticket not found.");
           } else {
-            setError(err.message || "Failed to load ticket.");
+            setError(
+              err instanceof ApiError
+                ? err.message || "Failed to load ticket."
+                : "Failed to load ticket."
+            );
+          }
+        } else {
+          setTicket(ticketResult.value);
+
+          if (commentsResult.status === "fulfilled") {
+            setComments(commentsResult.value);
+          } else {
+            const err = commentsResult.reason;
+            setCommentsError(
+              err instanceof ApiError
+                ? err.message || "Failed to load comments."
+                : "Failed to load comments. Please try again."
+            );
           }
         }
       } finally {
         if (!cancelled) {
           setLoading(false);
+          setCommentsLoading(false);
         }
       }
     }
@@ -238,7 +275,6 @@ function TicketDetailPage() {
       setTicket((current) => ({
         ...current,
         ...updated,
-        comments: current.comments,
       }));
       setIsEditing(false);
       setForm(null);
@@ -280,7 +316,6 @@ function TicketDetailPage() {
       setTicket((current) => ({
         ...current,
         ...updated,
-        comments: current.comments,
       }));
     } catch (err) {
       if (err instanceof ApiError) {
@@ -292,6 +327,48 @@ function TicketDetailPage() {
       }
     } finally {
       setStatusSubmitting(false);
+    }
+  }
+
+  async function handleAddComment(event) {
+    event.preventDefault();
+    setCommentError("");
+    setCommentFieldError("");
+
+    if (!commentMessage.trim()) {
+      setCommentFieldError("Message is required");
+      return;
+    }
+
+    if (commentMessage.trim().length > MESSAGE_MAX_LENGTH) {
+      setCommentFieldError(
+        `Message must be at most ${MESSAGE_MAX_LENGTH} characters`
+      );
+      return;
+    }
+
+    setCommentSubmitting(true);
+
+    try {
+      const created = await addComment(id, {
+        message: commentMessage.trim(),
+      });
+      setComments((current) => [...current, created]);
+      setCommentMessage("");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const messageDetail = err.details.find(
+          (detail) => detail.field === "message"
+        );
+        if (messageDetail?.message) {
+          setCommentFieldError(messageDetail.message);
+        }
+        setCommentError(err.message || "Failed to add comment");
+      } else {
+        setCommentError("Failed to add comment. Please try again.");
+      }
+    } finally {
+      setCommentSubmitting(false);
     }
   }
 
@@ -332,9 +409,75 @@ function TicketDetailPage() {
               <h4>Description</h4>
               <p className="ticket-description">{ticket.description}</p>
             </section>
-            <section className="ticket-detail-section ticket-comments-placeholder">
+            <section className="ticket-detail-section ticket-comments-section">
               <h4>Comments</h4>
-              <p className="muted">Comments will appear here in a future update.</p>
+
+              {commentsLoading && (
+                <p className="muted">Loading comments...</p>
+              )}
+
+              {!commentsLoading && commentsError && (
+                <p className="status-error">{commentsError}</p>
+              )}
+
+              {!commentsLoading && !commentsError && comments.length > 0 ? (
+                <ul className="ticket-comment-list">
+                  {comments.map((comment) => (
+                    <li key={comment.id} className="ticket-comment-item">
+                      <p className="ticket-comment-message">{comment.message}</p>
+                      <p className="ticket-comment-meta">
+                        <span>{comment.createdBy.name}</span>
+                        <span aria-hidden="true">·</span>
+                        <time dateTime={comment.createdAt}>
+                          {formatDate(comment.createdAt)}
+                        </time>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              <form
+                className="ticket-comment-form"
+                onSubmit={handleAddComment}
+                noValidate
+              >
+                {commentError && (
+                  <p className="form-error-banner">{commentError}</p>
+                )}
+
+                <div className="form-field">
+                  <label htmlFor="comment-message">Add a comment</label>
+                  <textarea
+                    id="comment-message"
+                    name="message"
+                    rows={4}
+                    maxLength={MESSAGE_MAX_LENGTH}
+                    value={commentMessage}
+                    onChange={(event) => {
+                      setCommentMessage(event.target.value);
+                      setCommentFieldError("");
+                      setCommentError("");
+                    }}
+                    disabled={commentSubmitting}
+                    aria-invalid={Boolean(commentFieldError)}
+                    aria-describedby={
+                      commentFieldError ? "comment-message-error" : undefined
+                    }
+                  />
+                  {commentFieldError && (
+                    <p id="comment-message-error" className="field-error">
+                      {commentFieldError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" disabled={commentSubmitting}>
+                    {commentSubmitting ? "Posting..." : "Post Comment"}
+                  </button>
+                </div>
+              </form>
             </section>
           </div>
 

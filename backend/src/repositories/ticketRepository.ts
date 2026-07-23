@@ -27,18 +27,6 @@ const ticketInclude = {
   },
 } as const;
 
-const ticketDetailInclude = {
-  ...ticketInclude,
-  comments: {
-    include: {
-      creator: {
-        select: { id: true, name: true },
-      },
-    },
-    orderBy: { createdAt: "asc" as const },
-  },
-} as const;
-
 export const ticketRepository = {
   async create(data: CreateTicketData) {
     return prisma.ticket.create({
@@ -57,7 +45,7 @@ export const ticketRepository = {
   async findById(id: string) {
     return prisma.ticket.findUnique({
       where: { id },
-      include: ticketDetailInclude,
+      include: ticketInclude,
     });
   },
 

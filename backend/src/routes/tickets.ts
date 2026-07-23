@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { addComment, listComments } from "../controllers/commentController.js";
 import {
   createTicket,
   getTicket,
@@ -14,5 +15,7 @@ router.get("/", listTickets);
 router.post("/", requestContext, validateJsonBody, createTicket);
 router.get("/:id", getTicket);
 router.patch("/:id", validateJsonBody, updateTicket);
+router.get("/:id/comments", listComments);
+router.post("/:id/comments", requestContext, validateJsonBody, addComment);
 
 export default router;

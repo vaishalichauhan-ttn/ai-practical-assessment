@@ -15,7 +15,6 @@ const mockTicket = {
   createdBy: { id: "11111111-1111-1111-1111-111111111111", name: "Alice Johnson" },
   createdAt: "2026-07-23T09:00:00.000Z",
   updatedAt: "2026-07-23T09:00:00.000Z",
-  comments: [],
 };
 
 const mockUsers = [
@@ -36,13 +35,15 @@ const mockUsers = [
 vi.mock("../api/tickets.js", () => ({
   getTicket: vi.fn(),
   updateTicket: vi.fn(),
+  addComment: vi.fn(),
+  listComments: vi.fn(),
 }));
 
 vi.mock("../api/users.js", () => ({
   listUsers: vi.fn(),
 }));
 
-import { getTicket, updateTicket } from "../api/tickets.js";
+import { getTicket, updateTicket, addComment, listComments } from "../api/tickets.js";
 import { listUsers } from "../api/users.js";
 
 function renderDetailPage(ticketId = mockTicket.id) {
@@ -59,11 +60,15 @@ describe("TicketDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getTicket.mockResolvedValue(mockTicket);
+    listComments.mockResolvedValue([]);
     listUsers.mockResolvedValue(mockUsers);
   });
 
   it("shows loading state while fetching ticket", () => {
     getTicket.mockImplementation(
+      () => new Promise(() => {})
+    );
+    listComments.mockImplementation(
       () => new Promise(() => {})
     );
 
@@ -81,7 +86,9 @@ describe("TicketDetailPage", () => {
     expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
     expect(screen.getByLabelText(/^status$/i)).toBeInTheDocument();
-    expect(screen.getByText(/comments will appear here/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^comments$/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/add a comment/i)).toBeInTheDocument();
+    expect(listComments).toHaveBeenCalledWith(mockTicket.id);
     expect(screen.getByRole("button", { name: /edit ticket/i })).toBeInTheDocument();
     expect(listUsers).not.toHaveBeenCalled();
   });
@@ -280,6 +287,7 @@ describe("TicketDetailPage", () => {
 
   it("shows not found message for missing tickets", async () => {
     getTicket.mockRejectedValue(new ApiError(404, "Ticket not found"));
+    listComments.mockRejectedValue(new ApiError(404, "Ticket not found"));
 
     renderDetailPage();
 
@@ -386,5 +394,111 @@ describe("TicketDetailPage", () => {
     expect(screen.getByLabelText(/^status$/i)).toHaveValue("Closed");
     expect(screen.getByRole("option", { name: "Closed" })).toBeEnabled();
     expect(screen.getByRole("option", { name: "Open" })).toBeDisabled();
+  });
+
+  it("renders comments in chronological order with author and timestamp", async () => {
+    listComments.mockResolvedValue([
+      {
+        id: "comment-1",
+        message: "First comment",
+        createdBy: { id: mockUsers[0].id, name: mockUsers[0].name },
+        createdAt: "2026-07-23T09:00:00.000Z",
+        updatedAt: "2026-07-23T09:00:00.000Z",
+      },
+      {
+        id: "comment-2",
+        message: "Second comment",
+        createdBy: { id: mockUsers[1].id, name: mockUsers[1].name },
+        createdAt: "2026-07-23T10:00:00.000Z",
+        updatedAt: "2026-07-23T10:00:00.000Z",
+      },
+    ]);
+
+    renderDetailPage();
+
+    expect(await screen.findByText("First comment")).toBeInTheDocument();
+    expect(screen.getByText("Second comment")).toBeInTheDocument();
+
+    const commentItems = document.querySelectorAll(".ticket-comment-item");
+    expect(commentItems).toHaveLength(2);
+    expect(commentItems[0]).toHaveTextContent("First comment");
+    expect(commentItems[0]).toHaveTextContent("Alice Johnson");
+    expect(commentItems[1]).toHaveTextContent("Second comment");
+    expect(commentItems[1]).toHaveTextContent("Bob Smith");
+  });
+
+  it("adds a comment and appends it to the list without reloading", async () => {
+    const user = userEvent.setup();
+    addComment.mockResolvedValue({
+      id: "comment-new",
+      message: "New follow-up",
+      createdBy: { id: mockUsers[0].id, name: mockUsers[0].name },
+      createdAt: "2026-07-23T11:00:00.000Z",
+      updatedAt: "2026-07-23T11:00:00.000Z",
+    });
+
+    renderDetailPage();
+
+    await screen.findByRole("heading", { name: /^comments$/i });
+    await user.type(screen.getByLabelText(/add a comment/i), "New follow-up");
+    await user.click(screen.getByRole("button", { name: /post comment/i }));
+
+    await waitFor(() => {
+      expect(addComment).toHaveBeenCalledWith(mockTicket.id, {
+        message: "New follow-up",
+      });
+    });
+
+    expect(await screen.findByText("New follow-up")).toBeInTheDocument();
+    expect(screen.getByLabelText(/add a comment/i)).toHaveValue("");
+  });
+
+  it("shows client-side validation error for empty comment", async () => {
+    const user = userEvent.setup();
+    renderDetailPage();
+
+    await screen.findByRole("heading", { name: /^comments$/i });
+    await user.click(screen.getByRole("button", { name: /post comment/i }));
+
+    expect(await screen.findByText("Message is required")).toBeInTheDocument();
+    expect(addComment).not.toHaveBeenCalled();
+  });
+
+  it("limits comment input to the API max length", async () => {
+    renderDetailPage();
+
+    const commentField = await screen.findByLabelText(/add a comment/i);
+    expect(commentField).toHaveAttribute("maxLength", "5000");
+  });
+
+  it("displays API validation error when comment submission fails", async () => {
+    const user = userEvent.setup();
+    addComment.mockRejectedValue(
+      new ApiError(400, "Validation failed", [
+        { field: "message", message: "message is required" },
+      ])
+    );
+
+    renderDetailPage();
+
+    await screen.findByRole("heading", { name: /^comments$/i });
+    await user.type(screen.getByLabelText(/add a comment/i), "Server rejected this");
+    await user.click(screen.getByRole("button", { name: /post comment/i }));
+
+    expect(await screen.findByText("Validation failed")).toBeInTheDocument();
+    expect(screen.getByText("message is required")).toBeInTheDocument();
+    expect(screen.getByLabelText(/add a comment/i)).toHaveValue(
+      "Server rejected this"
+    );
+  });
+
+  it("shows inline error when comment list fails to load but ticket loads", async () => {
+    listComments.mockRejectedValue(new ApiError(500, "Internal server error"));
+
+    renderDetailPage();
+
+    expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
+    expect(await screen.findByText("Internal server error")).toBeInTheDocument();
+    expect(screen.getByLabelText(/add a comment/i)).toBeInTheDocument();
   });
 });

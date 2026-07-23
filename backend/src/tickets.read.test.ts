@@ -109,10 +109,10 @@ describe("GET /api/tickets/:id", () => {
         id: user.id,
         name: user.name,
       },
-      comments: [],
     });
     expect(response.body.createdAt).toBeTruthy();
     expect(response.body.updatedAt).toBeTruthy();
+    expect(response.body.comments).toBeUndefined();
   });
 
   it("returns detail matching data from create endpoint", async () => {
@@ -143,8 +143,8 @@ describe("GET /api/tickets/:id", () => {
         id: user.id,
         name: user.name,
       },
-      comments: [],
     });
+    expect(detailResponse.body.comments).toBeUndefined();
   });
 
   it("returns 404 for a non-existent ticket id", async () => {

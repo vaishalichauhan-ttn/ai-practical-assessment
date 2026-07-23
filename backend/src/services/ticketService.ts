@@ -7,7 +7,6 @@ import {
 } from "../constants/ticket.js";
 import { NotFoundError, ValidationError } from "../errors/AppError.js";
 import {
-  toTicketDetailDto,
   toTicketDto,
   toTicketSummaryDto,
 } from "../mappers/ticketMapper.js";
@@ -74,7 +73,7 @@ export const ticketService = {
       throw new NotFoundError("Ticket not found");
     }
 
-    return toTicketDetailDto(ticket);
+    return toTicketDto(ticket);
   },
 
   /**

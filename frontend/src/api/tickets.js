@@ -47,3 +47,29 @@ export function updateTicket(id, payload) {
     body: JSON.stringify(payload),
   });
 }
+
+/**
+ * Adds a comment to an existing ticket.
+ *
+ * @param ticketId Ticket UUID.
+ * @param payload Comment fields (message).
+ * @returns Promise resolving to the created comment.
+ * @throws {import("./client.js").ApiError} When the API returns a validation or server error.
+ */
+export function addComment(ticketId, payload) {
+  return apiRequest(`/api/tickets/${ticketId}/comments`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Fetches all comments for a ticket.
+ *
+ * @param ticketId Ticket UUID.
+ * @returns Promise resolving to the list of comments.
+ * @throws {import("./client.js").ApiError} When the API returns a validation or server error.
+ */
+export function listComments(ticketId) {
+  return apiRequest(`/api/tickets/${ticketId}/comments`);
+}
