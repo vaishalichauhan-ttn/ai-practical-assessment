@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { ApiError } from "../api/client.js";
+import { ApiError, ERROR_MESSAGES, NetworkError } from "../api/client.js";
 import TicketDetailPage from "./TicketDetailPage.jsx";
 
 const mockTicket = {
@@ -347,7 +347,7 @@ describe("TicketDetailPage", () => {
     renderDetailPage();
 
     expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
-    expect(await screen.findByText("Internal server error")).toBeInTheDocument();
+    expect(await screen.findByText(ERROR_MESSAGES.SERVER)).toBeInTheDocument();
     expect(screen.getByLabelText(/assignee/i)).toBeInTheDocument();
   });
 
@@ -358,6 +358,18 @@ describe("TicketDetailPage", () => {
     renderDetailPage();
 
     expect(await screen.findByText("Ticket not found.")).toBeInTheDocument();
+  });
+
+  it("shows a network error message when ticket loading fails offline", async () => {
+    getTicket.mockRejectedValue(new NetworkError());
+    listComments.mockRejectedValue(new NetworkError());
+    listUsers.mockRejectedValue(new NetworkError());
+
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(ERROR_MESSAGES.NETWORK)
+    ).toBeInTheDocument();
   });
 
   it("disables invalid status options based on the current status", async () => {
@@ -563,7 +575,7 @@ describe("TicketDetailPage", () => {
     renderDetailPage();
 
     expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
-    expect(await screen.findByText("Internal server error")).toBeInTheDocument();
+    expect(await screen.findByText(ERROR_MESSAGES.SERVER)).toBeInTheDocument();
     expect(screen.getByLabelText(/add a comment/i)).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ApiError } from "../api/client.js";
+import { ApiError, getErrorMessage } from "../api/client.js";
 import { getTicket, updateTicket, addComment, listComments } from "../api/tickets.js";
 import { listUsers } from "../api/users.js";
 import { PRIORITY_OPTIONS, TICKET_STATUSES, isStatusOptionEnabled } from "../constants/ticket.js";
@@ -183,11 +183,7 @@ function TicketDetailPage() {
           if (err instanceof ApiError && err.status === 404) {
             setError("Ticket not found.");
           } else {
-            setError(
-              err instanceof ApiError
-                ? err.message || "Failed to load ticket."
-                : "Failed to load ticket."
-            );
+            setError(getErrorMessage(err, "Failed to load ticket."));
           }
         } else {
           setTicket(ticketResult.value);
@@ -197,9 +193,7 @@ function TicketDetailPage() {
           } else {
             const err = commentsResult.reason;
             setCommentsError(
-              err instanceof ApiError
-                ? err.message || "Failed to load comments."
-                : "Failed to load comments. Please try again."
+              getErrorMessage(err, "Failed to load comments. Please try again.")
             );
           }
 
@@ -208,9 +202,7 @@ function TicketDetailPage() {
           } else {
             const err = usersResult.reason;
             setUsersError(
-              err instanceof ApiError
-                ? err.message || "Failed to load assignees."
-                : "Failed to load assignees. Please try again."
+              getErrorMessage(err, "Failed to load assignees. Please try again.")
             );
           }
         }
@@ -242,9 +234,7 @@ function TicketDetailPage() {
       setUsers(usersData);
     } catch (err) {
       setUsersError(
-        err instanceof ApiError
-          ? err.message || "Failed to load assignees."
-          : "Failed to load assignees. Please try again."
+        getErrorMessage(err, "Failed to load assignees. Please try again.")
       );
     } finally {
       setUsersLoading(false);
@@ -349,9 +339,9 @@ function TicketDetailPage() {
         }
 
         setFieldErrors(nextFieldErrors);
-        setFormError(err.message || "Failed to update ticket");
+        setFormError(getErrorMessage(err, "Failed to update ticket"));
       } else {
-        setFormError("Failed to update ticket. Please try again.");
+        setFormError(getErrorMessage(err, "Failed to update ticket. Please try again."));
       }
     } finally {
       setSubmitting(false);
@@ -375,10 +365,13 @@ function TicketDetailPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         setStatusError(
-          getStatusErrorMessage(err) || err.message || "Failed to update status"
+          getStatusErrorMessage(err) ||
+            getErrorMessage(err, "Failed to update status")
         );
       } else {
-        setStatusError("Failed to update status. Please try again.");
+        setStatusError(
+          getErrorMessage(err, "Failed to update status. Please try again.")
+        );
       }
     } finally {
       setStatusSubmitting(false);
@@ -409,10 +402,13 @@ function TicketDetailPage() {
           (detail) => detail.field === "assignedTo"
         );
         setAssigneeError(
-          assigneeDetail?.message || err.message || "Failed to update assignee"
+          assigneeDetail?.message ||
+            getErrorMessage(err, "Failed to update assignee")
         );
       } else {
-        setAssigneeError("Failed to update assignee. Please try again.");
+        setAssigneeError(
+          getErrorMessage(err, "Failed to update assignee. Please try again.")
+        );
       }
     } finally {
       setAssigneeSubmitting(false);
@@ -452,9 +448,9 @@ function TicketDetailPage() {
         if (messageDetail?.message) {
           setCommentFieldError(messageDetail.message);
         }
-        setCommentError(err.message || "Failed to add comment");
+        setCommentError(getErrorMessage(err, "Failed to add comment"));
       } else {
-        setCommentError("Failed to add comment. Please try again.");
+        setCommentError(getErrorMessage(err, "Failed to add comment. Please try again."));
       }
     } finally {
       setCommentSubmitting(false);

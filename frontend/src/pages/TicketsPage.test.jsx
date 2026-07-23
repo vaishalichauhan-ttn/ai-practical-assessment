@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { ApiError, ERROR_MESSAGES, NetworkError } from "../api/client.js";
 import TicketsPage from "./TicketsPage.jsx";
 
 const mockTickets = [
@@ -153,5 +154,25 @@ describe("TicketsPage search and filter", () => {
     await waitFor(() => {
       expect(screen.getByText(/no tickets match your filters/i)).toBeInTheDocument();
     });
+  });
+
+  it("shows a network error message when ticket loading fails offline", async () => {
+    listTickets.mockRejectedValue(new NetworkError());
+
+    renderTicketsPage();
+
+    expect(
+      await screen.findByText(ERROR_MESSAGES.NETWORK)
+    ).toBeInTheDocument();
+  });
+
+  it("shows a generic server error message when ticket loading returns 500", async () => {
+    listTickets.mockRejectedValue(new ApiError(500, "Internal server error"));
+
+    renderTicketsPage();
+
+    expect(
+      await screen.findByText(ERROR_MESSAGES.SERVER)
+    ).toBeInTheDocument();
   });
 });

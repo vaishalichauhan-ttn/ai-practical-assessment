@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getHealth } from "../api/client.js";
+import { getHealth, getErrorMessage } from "../api/client.js";
 
 function HomePage() {
   const [health, setHealth] = useState(null);
@@ -18,7 +18,7 @@ function HomePage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || "Failed to reach API");
+          setError(getErrorMessage(err, "Failed to reach API"));
           setHealth(null);
         }
       } finally {

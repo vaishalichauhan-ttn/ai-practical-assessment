@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ApiError } from "../api/client.js";
+import { getErrorMessage } from "../api/client.js";
 import { listTickets } from "../api/tickets.js";
 import CreateTicketModal from "../components/CreateTicketModal.jsx";
 import { TICKET_STATUSES } from "../constants/ticket.js";
@@ -54,11 +54,7 @@ function TicketsPage() {
       setTickets(data);
     } catch (err) {
       setTickets([]);
-      if (err instanceof ApiError) {
-        setError(err.message || "Failed to load tickets.");
-      } else {
-        setError("Failed to load tickets. Please try again.");
-      }
+      setError(getErrorMessage(err, "Failed to load tickets. Please try again."));
     } finally {
       setLoading(false);
     }

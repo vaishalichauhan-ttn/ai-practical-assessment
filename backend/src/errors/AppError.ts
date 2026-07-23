@@ -8,6 +8,26 @@ export interface ErrorResponse {
   details?: ErrorDetail[];
 }
 
+/**
+ * Builds a consistent JSON error response body for API clients.
+ *
+ * @param message Human-readable error summary.
+ * @param details Optional field-level validation errors.
+ * @returns Structured error response matching the API contract.
+ */
+export function toErrorResponse(
+  message: string,
+  details?: ErrorDetail[]
+): ErrorResponse {
+  const body: ErrorResponse = { error: message };
+
+  if (details && details.length > 0) {
+    body.details = details;
+  }
+
+  return body;
+}
+
 export class AppError extends Error {
   readonly statusCode: number;
   readonly details?: ErrorDetail[];

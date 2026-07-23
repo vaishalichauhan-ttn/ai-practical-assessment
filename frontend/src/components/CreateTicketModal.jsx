@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError } from "../api/client.js";
+import { ApiError, getErrorMessage } from "../api/client.js";
 import { createTicket } from "../api/tickets.js";
 import { PRIORITY_OPTIONS } from "../constants/ticket.js";
 
@@ -105,10 +105,11 @@ function CreateTicketModal({ isOpen, onClose, onCreated }) {
         }
 
         setFieldErrors(nextFieldErrors);
-        setFormError(error.message || "Failed to create ticket");
-      } else {
-        setFormError("Failed to create ticket. Please try again.");
       }
+
+      setFormError(
+        getErrorMessage(error, "Failed to create ticket. Please try again.")
+      );
     } finally {
       setSubmitting(false);
     }

@@ -1,46 +1,42 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../errors/AppError.js";
-import type { ErrorResponse } from "../errors/AppError.js";
+import { AppError, toErrorResponse } from "../errors/AppError.js";
+import { logUnexpectedError } from "../lib/logger.js";
+
+const INTERNAL_SERVER_ERROR_MESSAGE = "Internal server error";
 
 export function notFoundHandler(_req: Request, res: Response): void {
-  const body: ErrorResponse = {
-    error: "Route not found",
-  };
-  res.status(404).json(body);
+  res.status(404).json(toErrorResponse("Route not found"));
 }
 
 export function errorHandler(
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
   if (err instanceof AppError) {
-    const body: ErrorResponse = {
-      error: err.message,
-    };
-
-    if (err.details && err.details.length > 0) {
-      body.details = err.details;
+    if (err.statusCode >= 500) {
+      logUnexpectedError(err, req);
+      res.status(500).json(toErrorResponse(INTERNAL_SERVER_ERROR_MESSAGE));
+      return;
     }
 
-    res.status(err.statusCode).json(body);
+    res
+      .status(err.statusCode)
+      .json(toErrorResponse(err.message, err.details));
     return;
   }
 
   if (err instanceof SyntaxError && "body" in err) {
-    const body: ErrorResponse = {
-      error: "Invalid JSON payload",
-      details: [{ field: "body", message: "Request body must be valid JSON" }],
-    };
-    res.status(400).json(body);
+    res.status(400).json(
+      toErrorResponse("Invalid JSON payload", [
+        { field: "body", message: "Request body must be valid JSON" },
+      ])
+    );
     return;
   }
 
-  console.error("Unhandled error:", err);
+  logUnexpectedError(err, req);
 
-  const body: ErrorResponse = {
-    error: "Internal server error",
-  };
-  res.status(500).json(body);
+  res.status(500).json(toErrorResponse(INTERNAL_SERVER_ERROR_MESSAGE));
 }
