@@ -1,0 +1,34 @@
+import { describe, it, expect } from "vitest";
+import {
+  getNextStatuses,
+  isStatusOptionEnabled,
+} from "./ticket.js";
+
+describe("getNextStatuses", () => {
+  it("returns allowed next statuses for each workflow state", () => {
+    expect(getNextStatuses("Open")).toEqual(["In Progress", "Cancelled"]);
+    expect(getNextStatuses("In Progress")).toEqual(["Resolved", "Cancelled"]);
+    expect(getNextStatuses("Resolved")).toEqual(["Closed"]);
+  });
+
+  it("returns an empty array for terminal states", () => {
+    expect(getNextStatuses("Closed")).toEqual([]);
+    expect(getNextStatuses("Cancelled")).toEqual([]);
+  });
+});
+
+describe("isStatusOptionEnabled", () => {
+  it("enables the current status and valid next statuses only", () => {
+    expect(isStatusOptionEnabled("Open", "Open")).toBe(true);
+    expect(isStatusOptionEnabled("Open", "In Progress")).toBe(true);
+    expect(isStatusOptionEnabled("Open", "Cancelled")).toBe(true);
+    expect(isStatusOptionEnabled("Open", "Closed")).toBe(false);
+    expect(isStatusOptionEnabled("Open", "Resolved")).toBe(false);
+  });
+
+  it("only enables the current status for terminal states", () => {
+    expect(isStatusOptionEnabled("Closed", "Closed")).toBe(true);
+    expect(isStatusOptionEnabled("Closed", "Open")).toBe(false);
+    expect(isStatusOptionEnabled("Cancelled", "In Progress")).toBe(false);
+  });
+});

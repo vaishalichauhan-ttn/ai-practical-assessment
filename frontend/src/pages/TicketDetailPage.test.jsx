@@ -73,13 +73,15 @@ describe("TicketDetailPage", () => {
     expect(listUsers).not.toHaveBeenCalled();
   });
 
-  it("renders ticket details in read-only view without loading users", async () => {
+  it("renders ticket details in a two-column layout without loading users", async () => {
     renderDetailPage();
 
     expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
     expect(screen.getByText("User reports 401 error.")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^status$/i)).toBeInTheDocument();
+    expect(screen.getByText(/comments will appear here/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /edit ticket/i })).toBeInTheDocument();
     expect(listUsers).not.toHaveBeenCalled();
   });
@@ -95,6 +97,7 @@ describe("TicketDetailPage", () => {
       expect(listUsers).toHaveBeenCalledTimes(1);
     });
     expect(screen.getByLabelText(/assignee/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^status$/i)).toBeInTheDocument();
   });
 
   it("shows edit form and saves updated fields", async () => {
@@ -117,11 +120,11 @@ describe("TicketDetailPage", () => {
       expect(listUsers).toHaveBeenCalled();
     });
 
-    await user.clear(screen.getByLabelText(/title/i));
-    await user.type(screen.getByLabelText(/title/i), "Updated title");
-    await user.clear(screen.getByLabelText(/description/i));
-    await user.type(screen.getByLabelText(/description/i), "Updated description");
-    await user.selectOptions(screen.getByLabelText(/priority/i), "Critical");
+    await user.clear(screen.getByLabelText(/^title$/i));
+    await user.type(screen.getByLabelText(/^title$/i), "Updated title");
+    await user.clear(screen.getByLabelText(/^description$/i));
+    await user.type(screen.getByLabelText(/^description$/i), "Updated description");
+    await user.selectOptions(screen.getByLabelText(/^priority$/i), "Critical");
     await user.selectOptions(screen.getByLabelText(/assignee/i), mockUsers[1].id);
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
@@ -138,6 +141,37 @@ describe("TicketDetailPage", () => {
     expect(screen.getByText("Updated description")).toBeInTheDocument();
     expect(screen.getByText("Critical")).toBeInTheDocument();
     expect(screen.getByText("Bob Smith")).toBeInTheDocument();
+  });
+
+  it("includes status in save payload when changed in edit mode", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockResolvedValue({
+      ...mockTicket,
+      status: "In Progress",
+      updatedAt: "2026-07-23T10:00:00.000Z",
+    });
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.click(screen.getByRole("button", { name: /edit ticket/i }));
+    await waitFor(() => {
+      expect(listUsers).toHaveBeenCalled();
+    });
+
+    const statusSelects = screen.getAllByLabelText(/^status$/i);
+    await user.selectOptions(statusSelects[statusSelects.length - 1], "In Progress");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(updateTicket).toHaveBeenCalledWith(mockTicket.id, {
+        title: mockTicket.title,
+        description: mockTicket.description,
+        priority: mockTicket.priority,
+        assignedTo: null,
+        status: "In Progress",
+      });
+    });
   });
 
   it("supports unassigning a ticket", async () => {
@@ -181,15 +215,15 @@ describe("TicketDetailPage", () => {
     await screen.findByText("Cannot log in");
     await user.click(screen.getByRole("button", { name: /edit ticket/i }));
     await waitFor(() => {
-      expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
     });
 
-    await user.clear(screen.getByLabelText(/title/i));
-    await user.type(screen.getByLabelText(/title/i), "Discarded change");
+    await user.clear(screen.getByLabelText(/^title$/i));
+    await user.type(screen.getByLabelText(/^title$/i), "Discarded change");
     await user.click(screen.getByRole("button", { name: /cancel/i }));
 
     expect(screen.getByText("Cannot log in")).toBeInTheDocument();
-    expect(screen.queryByLabelText(/title/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^title$/i)).not.toBeInTheDocument();
     expect(updateTicket).not.toHaveBeenCalled();
   });
 
@@ -199,8 +233,8 @@ describe("TicketDetailPage", () => {
 
     await screen.findByText("Cannot log in");
     await user.click(screen.getByRole("button", { name: /edit ticket/i }));
-    await user.clear(screen.getByLabelText(/title/i));
-    await user.clear(screen.getByLabelText(/description/i));
+    await user.clear(screen.getByLabelText(/^title$/i));
+    await user.clear(screen.getByLabelText(/^description$/i));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByText("Title is required")).toBeInTheDocument();
@@ -241,7 +275,7 @@ describe("TicketDetailPage", () => {
     await user.click(screen.getByRole("button", { name: /edit ticket/i }));
 
     expect(await screen.findByText("Internal server error")).toBeInTheDocument();
-    expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
   });
 
   it("shows not found message for missing tickets", async () => {
@@ -251,5 +285,106 @@ describe("TicketDetailPage", () => {
 
     expect(await screen.findByText("Ticket not found.")).toBeInTheDocument();
     expect(listUsers).not.toHaveBeenCalled();
+  });
+
+  it("disables invalid status options based on the current status", async () => {
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+
+    expect(screen.getByRole("option", { name: "Open" })).toBeEnabled();
+    expect(screen.getByRole("option", { name: "In Progress" })).toBeEnabled();
+    expect(screen.getByRole("option", { name: "Cancelled" })).toBeEnabled();
+    expect(screen.getByRole("option", { name: "Closed" })).toBeDisabled();
+    expect(screen.getByRole("option", { name: "Resolved" })).toBeDisabled();
+  });
+
+  it("changes ticket status via dropdown and updates the displayed status", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockResolvedValue({
+      ...mockTicket,
+      status: "In Progress",
+      updatedAt: "2026-07-23T10:00:00.000Z",
+    });
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/^status$/i), "In Progress");
+
+    await waitFor(() => {
+      expect(updateTicket).toHaveBeenCalledWith(mockTicket.id, {
+        status: "In Progress",
+      });
+    });
+
+    expect(screen.getByLabelText(/^status$/i)).toHaveValue("In Progress");
+  });
+
+  it("displays API error when status transition fails", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockRejectedValue(
+      new ApiError(400, "Cannot transition from Open to In Progress", [
+        {
+          field: "status",
+          message: "Cannot transition from Open to In Progress",
+        },
+      ])
+    );
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/^status$/i), "In Progress");
+
+    expect(
+      await screen.findByText("Cannot transition from Open to In Progress")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/^status$/i)).toHaveValue("Open");
+  });
+
+  it("shows inline status field error in edit mode when transition fails", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockRejectedValue(
+      new ApiError(400, "Cannot transition from Open to Cancelled", [
+        {
+          field: "status",
+          message: "Cannot transition from Open to Cancelled",
+        },
+      ])
+    );
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.click(screen.getByRole("button", { name: /edit ticket/i }));
+    await waitFor(() => {
+      expect(listUsers).toHaveBeenCalled();
+    });
+
+    const statusSelects = screen.getAllByLabelText(/^status$/i);
+    await user.selectOptions(statusSelects[statusSelects.length - 1], "Cancelled");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(document.getElementById("edit-status-error")).toHaveTextContent(
+        "Cannot transition from Open to Cancelled"
+      );
+    });
+    expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+  });
+
+  it("keeps status dropdown available for terminal tickets", async () => {
+    getTicket.mockResolvedValue({
+      ...mockTicket,
+      status: "Closed",
+    });
+
+    renderDetailPage();
+
+    await screen.findByText("Closed");
+    expect(screen.getByLabelText(/^status$/i)).toHaveValue("Closed");
+    expect(screen.getByRole("option", { name: "Closed" })).toBeEnabled();
+    expect(screen.getByRole("option", { name: "Open" })).toBeDisabled();
   });
 });

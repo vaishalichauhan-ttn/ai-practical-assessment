@@ -15,6 +15,7 @@ export interface UpdateTicketData {
   description?: string;
   priority?: Priority;
   assignedTo?: string | null;
+  status?: TicketStatus;
 }
 
 const ticketInclude = {
@@ -66,6 +67,14 @@ export const ticketRepository = {
       select: { id: true },
     });
     return ticket !== null;
+  },
+
+  async findStatusById(id: string) {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    return ticket?.status ?? null;
   },
 
   async update(id: string, data: UpdateTicketData) {

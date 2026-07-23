@@ -12,6 +12,7 @@ export interface UpdateTicketInput {
   description?: string;
   priority?: Priority;
   assignedTo?: string | null;
+  status?: string;
 }
 
 export interface UserRefDto {

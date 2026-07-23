@@ -25,7 +25,7 @@ a:hover {
 }
 
 .app-shell {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
 }
@@ -242,11 +242,123 @@ a:hover {
 }
 
 .ticket-detail-title {
-  margin: 0 0 1rem;
+  margin: 0;
+}
+
+.ticket-detail-main {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.ticket-detail-panel {
+  padding: var(--ticket-panel-padding, 1.25rem);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+
+.ticket-detail-title-panel {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ticket-detail-card {
+  overflow: hidden;
+}
+
+.ticket-detail-layout {
+  --ticket-panel-padding: 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.ticket-detail-section {
+  padding-inline: var(--ticket-panel-padding, 1.25rem);
+}
+
+.ticket-detail-section h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.ticket-description {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #334155;
+  line-height: 1.65;
+}
+
+.ticket-comments-placeholder {
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ticket-detail-sidebar {
+  display: grid;
+  gap: 1rem;
+}
+
+.ticket-meta-list {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.ticket-meta-item {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ticket-meta-item dt,
+.ticket-meta-item > label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.ticket-meta-item dd {
+  margin: 0;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.ticket-detail-sidebar .form-field {
+  margin: 0;
+}
+
+.ticket-detail-sidebar .form-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.ticket-sidebar-actions {
+  margin-top: 0.5rem;
+}
+
+.ticket-edit-form {
+  margin-top: 0;
 }
 
 .ticket-detail-summary dd {
   white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+  .ticket-detail-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .modal-backdrop {

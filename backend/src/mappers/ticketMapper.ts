@@ -1,4 +1,5 @@
-import type { Comment, Priority, Ticket, TicketStatus, User } from "@prisma/client";
+import type { Comment, Priority, Ticket, User } from "@prisma/client";
+import { STATUS_PRISMA_TO_API } from "../constants/ticket.js";
 import type {
   CommentDto,
   TicketDetailDto,
@@ -20,14 +21,6 @@ type TicketWithComments = TicketWithRelations & {
   comments: CommentWithCreator[];
 };
 
-const STATUS_API_MAP: Record<TicketStatus, string> = {
-  Open: "Open",
-  InProgress: "In Progress",
-  Resolved: "Resolved",
-  Closed: "Closed",
-  Cancelled: "Cancelled",
-};
-
 function toUserRef(user: Pick<User, "id" | "name">): UserRefDto {
   return {
     id: user.id,
@@ -41,7 +34,7 @@ export function toTicketDto(ticket: TicketWithRelations): TicketDto {
     title: ticket.title,
     description: ticket.description,
     priority: ticket.priority as Priority,
-    status: STATUS_API_MAP[ticket.status],
+    status: STATUS_PRISMA_TO_API[ticket.status],
     assignedTo: ticket.assignee ? toUserRef(ticket.assignee) : null,
     createdBy: toUserRef(ticket.creator),
     createdAt: ticket.createdAt.toISOString(),
@@ -54,7 +47,7 @@ export function toTicketSummaryDto(ticket: TicketWithRelations): TicketSummaryDt
     id: ticket.id,
     title: ticket.title,
     priority: ticket.priority as Priority,
-    status: STATUS_API_MAP[ticket.status],
+    status: STATUS_PRISMA_TO_API[ticket.status],
     assignedTo: ticket.assignee ? toUserRef(ticket.assignee) : null,
     createdAt: ticket.createdAt.toISOString(),
     updatedAt: ticket.updatedAt.toISOString(),

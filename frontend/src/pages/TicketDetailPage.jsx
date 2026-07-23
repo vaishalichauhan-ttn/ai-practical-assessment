@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../api/client.js";
 import { getTicket, updateTicket } from "../api/tickets.js";
 import { listUsers } from "../api/users.js";
-import { PRIORITY_OPTIONS } from "../constants/ticket.js";
+import { PRIORITY_OPTIONS, TICKET_STATUSES, isStatusOptionEnabled } from "../constants/ticket.js";
 import { formatDate } from "../utils/formatDate.js";
 
 const UNASSIGNED_VALUE = "";
@@ -13,8 +13,70 @@ function toFormState(ticket) {
     title: ticket.title,
     description: ticket.description,
     priority: ticket.priority,
+    status: ticket.status,
     assignedTo: ticket.assignedTo?.id ?? UNASSIGNED_VALUE,
   };
+}
+
+function StatusSelect({
+  id,
+  label,
+  value,
+  currentStatus,
+  onChange,
+  disabled,
+  error,
+  describedById,
+}) {
+  return (
+    <div className="ticket-meta-item form-field">
+      <label htmlFor={id}>{label}</label>
+      <select
+        id={id}
+        name="status"
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? describedById : undefined}
+      >
+        {TICKET_STATUSES.map((status) => (
+          <option
+            key={status}
+            value={status}
+            disabled={!isStatusOptionEnabled(currentStatus, status)}
+          >
+            {status}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p id={describedById} className="field-error">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function getStatusErrorMessage(err) {
+  if (!(err instanceof ApiError)) {
+    return null;
+  }
+
+  const statusDetail = err.details.find((detail) => detail.field === "status");
+  if (statusDetail?.message) {
+    return statusDetail.message;
+  }
+
+  if (
+    err.message.includes("Cannot transition") ||
+    err.message.includes("Status change not allowed")
+  ) {
+    return err.message;
+  }
+
+  return null;
 }
 
 function TicketDetailPage() {
@@ -30,6 +92,8 @@ function TicketDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState("");
+  const [statusError, setStatusError] = useState("");
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,6 +108,7 @@ function TicketDetailPage() {
       setFormError("");
       setUsers([]);
       setUsersError("");
+      setStatusError("");
 
       try {
         const ticketData = await getTicket(id);
@@ -103,6 +168,7 @@ function TicketDetailPage() {
     setFieldErrors({});
     setFormError("");
     setUsersError("");
+    setStatusError("");
     setIsEditing(true);
     await loadUsers();
   }
@@ -163,6 +229,10 @@ function TicketDetailPage() {
         form.assignedTo === UNASSIGNED_VALUE ? null : form.assignedTo,
     };
 
+    if (form.status !== ticket.status) {
+      payload.status = form.status;
+    }
+
     try {
       const updated = await updateTicket(id, payload);
       setTicket((current) => ({
@@ -172,6 +242,7 @@ function TicketDetailPage() {
       }));
       setIsEditing(false);
       setForm(null);
+      setStatusError("");
     } catch (err) {
       if (err instanceof ApiError) {
         const nextFieldErrors = {};
@@ -179,6 +250,11 @@ function TicketDetailPage() {
           if (detail.field && detail.field !== "body") {
             nextFieldErrors[detail.field] = detail.message;
           }
+        }
+
+        const statusMessage = getStatusErrorMessage(err);
+        if (statusMessage) {
+          nextFieldErrors.status = statusMessage;
         }
 
         setFieldErrors(nextFieldErrors);
@@ -191,8 +267,36 @@ function TicketDetailPage() {
     }
   }
 
+  async function handleStatusChange(nextStatus) {
+    if (!ticket || nextStatus === ticket.status) {
+      return;
+    }
+
+    setStatusError("");
+    setStatusSubmitting(true);
+
+    try {
+      const updated = await updateTicket(id, { status: nextStatus });
+      setTicket((current) => ({
+        ...current,
+        ...updated,
+        comments: current.comments,
+      }));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setStatusError(
+          getStatusErrorMessage(err) || err.message || "Failed to update status"
+        );
+      } else {
+        setStatusError("Failed to update status. Please try again.");
+      }
+    } finally {
+      setStatusSubmitting(false);
+    }
+  }
+
   return (
-    <section className="card">
+    <section className="card ticket-detail-card">
       <div className="page-header">
         <div>
           <p className="breadcrumb">
@@ -219,49 +323,66 @@ function TicketDetailPage() {
       )}
 
       {!loading && ticket && !isEditing && (
-        <>
-          <h3 className="ticket-detail-title">{ticket.title}</h3>
+        <div className="ticket-detail-layout">
+          <div className="ticket-detail-main">
+            <div className="ticket-detail-panel ticket-detail-title-panel">
+              <h3 className="ticket-detail-title">{ticket.title}</h3>
+            </div>
+            <section className="ticket-detail-section">
+              <h4>Description</h4>
+              <p className="ticket-description">{ticket.description}</p>
+            </section>
+            <section className="ticket-detail-section ticket-comments-placeholder">
+              <h4>Comments</h4>
+              <p className="muted">Comments will appear here in a future update.</p>
+            </section>
+          </div>
 
-          <dl className="ticket-summary ticket-detail-summary">
-            <div>
-              <dt>Description</dt>
-              <dd>{ticket.description}</dd>
-            </div>
-            <div>
-              <dt>Priority</dt>
-              <dd>{ticket.priority}</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>{ticket.status}</dd>
-            </div>
-            <div>
-              <dt>Assignee</dt>
-              <dd>{ticket.assignedTo?.name ?? "Unassigned"}</dd>
-            </div>
-            <div>
-              <dt>Created By</dt>
-              <dd>{ticket.createdBy.name}</dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>{formatDate(ticket.createdAt)}</dd>
-            </div>
-            <div>
-              <dt>Updated</dt>
-              <dd>{formatDate(ticket.updatedAt)}</dd>
-            </div>
-          </dl>
-        </>
+          <aside className="ticket-detail-panel ticket-detail-sidebar">
+            <StatusSelect
+              id="view-status"
+              label="Status"
+              value={ticket.status}
+              currentStatus={ticket.status}
+              onChange={(event) => handleStatusChange(event.target.value)}
+              disabled={statusSubmitting}
+              error={statusError}
+              describedById="view-status-error"
+            />
+
+            <dl className="ticket-meta-list">
+              <div className="ticket-meta-item">
+                <dt>Priority</dt>
+                <dd>{ticket.priority}</dd>
+              </div>
+              <div className="ticket-meta-item">
+                <dt>Assignee</dt>
+                <dd>{ticket.assignedTo?.name ?? "Unassigned"}</dd>
+              </div>
+              <div className="ticket-meta-item">
+                <dt>Created By</dt>
+                <dd>{ticket.createdBy.name}</dd>
+              </div>
+              <div className="ticket-meta-item">
+                <dt>Created</dt>
+                <dd>{formatDate(ticket.createdAt)}</dd>
+              </div>
+              <div className="ticket-meta-item">
+                <dt>Updated</dt>
+                <dd>{formatDate(ticket.updatedAt)}</dd>
+              </div>
+            </dl>
+          </aside>
+        </div>
       )}
 
       {!loading && ticket && isEditing && form && (
-        <>
-          <h3 className="ticket-detail-title">Edit Ticket</h3>
+        <form className="ticket-detail-layout ticket-edit-form" onSubmit={handleSave} noValidate>
+          <div className="ticket-detail-main">
+            <h3 className="ticket-detail-title">Edit Ticket</h3>
 
-          {formError && <p className="form-error-banner">{formError}</p>}
+            {formError && <p className="form-error-banner">{formError}</p>}
 
-          <form className="ticket-form" onSubmit={handleSave} noValidate>
             <div className="form-field">
               <label htmlFor="edit-title">Title</label>
               <input
@@ -287,7 +408,7 @@ function TicketDetailPage() {
               <textarea
                 id="edit-description"
                 name="description"
-                rows={5}
+                rows={8}
                 value={form.description}
                 onChange={(event) =>
                   updateField("description", event.target.value)
@@ -303,6 +424,19 @@ function TicketDetailPage() {
                 </p>
               )}
             </div>
+          </div>
+
+          <aside className="ticket-detail-panel ticket-detail-sidebar">
+            <StatusSelect
+              id="edit-status"
+              label="Status"
+              value={form.status}
+              currentStatus={ticket.status}
+              onChange={(event) => updateField("status", event.target.value)}
+              disabled={submitting}
+              error={fieldErrors.status}
+              describedById="edit-status-error"
+            />
 
             <div className="form-field">
               <label htmlFor="edit-priority">Priority</label>
@@ -365,7 +499,7 @@ function TicketDetailPage() {
               )}
             </div>
 
-            <div className="form-actions">
+            <div className="form-actions ticket-sidebar-actions">
               <button type="submit" disabled={submitting}>
                 {submitting ? "Saving..." : "Save Changes"}
               </button>
@@ -378,8 +512,8 @@ function TicketDetailPage() {
                 Cancel
               </button>
             </div>
-          </form>
-        </>
+          </aside>
+        </form>
       )}
     </section>
   );

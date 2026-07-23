@@ -62,7 +62,7 @@ export async function getTicket(
 }
 
 /**
- * Partially updates ticket fields (title, description, priority, assignedTo).
+ * Partially updates ticket fields (title, description, priority, assignedTo, status).
  */
 export async function updateTicket(
   req: Request,
@@ -81,6 +81,7 @@ export async function updateTicket(
       description: body.description as string | undefined,
       priority: body.priority as Priority | undefined,
       assignedTo: body.assignedTo as string | null | undefined,
+      status: body.status as string | undefined,
     };
 
     const ticket = await ticketService.update(id, body, input);

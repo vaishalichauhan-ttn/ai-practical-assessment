@@ -37,7 +37,7 @@ export function createTicket(payload) {
  * Partially updates an existing ticket.
  *
  * @param id Ticket UUID.
- * @param payload Fields to update (title, description, priority, assignedTo).
+ * @param payload Fields to update (title, description, priority, assignedTo, status).
  * @returns Promise resolving to the updated ticket.
  * @throws {import("./client.js").ApiError} When the API returns a validation or server error.
  */
