@@ -40,7 +40,7 @@ Runs `db:up` → `db:migrate` → `db:seed`.
 
 ```bash
 npm run db:up
-# docker compose up -d
+# docker compose up -d postgres
 ```
 
 Compose starts **PostgreSQL 16** and creates `support_tickets`. Wait until `support-tickets-db` is healthy.
