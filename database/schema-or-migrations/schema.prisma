@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Priority enum values: Low, Medium, High, Critical
+enum Priority {
+  Low
+  Medium
+  High
+  Critical
+}
+
+// Status enum values: Open, In Progress, Resolved, Closed, Cancelled
+enum TicketStatus {
+  Open
+  InProgress @map("In Progress")
+  Resolved
+  Closed
+  Cancelled
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  createdTickets Ticket[]  @relation("TicketCreator")
+  assignedTickets Ticket[] @relation("TicketAssignee")
+  comments       Comment[]
+
+  @@map("users")
+}
+
+model Ticket {
+  id          String       @id @default(uuid())
+  title       String
+  description String
+  priority    Priority
+  status      TicketStatus @default(Open)
+  assignedTo  String?      @map("assigned_to")
+  createdBy   String       @map("created_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  assignee User?     @relation("TicketAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator  User      @relation("TicketCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  comments Comment[]
+
+  @@index([status])
+  @@index([assignedTo])
+  @@index([title])
+  @@index([description])
+  @@map("tickets")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  message   String
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ticket  Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  creator User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([ticketId])
+  @@map("comments")
+}

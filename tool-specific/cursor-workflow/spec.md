@@ -66,7 +66,7 @@ The Support Ticket Management System is a backend-heavy, full-stack application 
 | ORM / migrations | Prisma |
 | Frontend | React + JavaScript + Vite (no TypeScript) |
 | API | REST + JSON |
-| Testing | Jest/Vitest + Supertest |
+| Testing | Vitest + Supertest (backend); Vitest + React Testing Library (frontend) |
 | API docs | OpenAPI (Swagger) |
 
 ### 1.5 Scope Boundaries

@@ -12,6 +12,8 @@
 | Database | PostgreSQL |
 | ORM / migrations | Prisma |
 | Frontend | React + JavaScript + Vite (no TypeScript) |
+| Testing (backend) | Vitest + Supertest (API integration tests) |
+| Testing (frontend) | Vitest + React Testing Library (component/UI tests) |
 
 ---
 
@@ -217,7 +219,7 @@ In Progress → Cancelled
 | Incorrect implementation of status transitions | High | Implement business rules in the service layer and verify with integration tests |
 | AI-generated code introduces incorrect business logic | High | Review, validate, and test all AI-generated code before acceptance |
 | Weak backend validation | High | Use centralized validation and consistent error handling |
-| Insufficient automated testing | Medium | Cover business rules and edge cases with integration tests |
+| Insufficient automated testing | Medium | Cover business rules with backend integration tests; cover UI behavior with React Testing Library frontend tests |
 | Poor project documentation | Medium | Maintain documentation throughout development |
 | Database configuration issues | Medium | Provide Prisma migrations, seed data, and PostgreSQL setup instructions |
 | Scope creep | Medium | Prioritize mandatory requirements before optional enhancements |

@@ -8,6 +8,8 @@
 | Database | PostgreSQL |
 | ORM / migrations | Prisma |
 | Frontend | React + JavaScript + Vite (no TypeScript) |
+| Testing (backend) | Vitest + Supertest (API integration tests) |
+| Testing (frontend) | Vitest + React Testing Library (component/UI tests) |
 
 ---
 
@@ -79,11 +81,19 @@
 
 # Testing
 
+## Backend
+
 - [ ] Integration tests verify valid status transitions.
 - [ ] Integration tests verify invalid status transitions.
 - [ ] Ticket CRUD functionality is tested.
 - [ ] Comment functionality is tested.
 - [ ] Search and filtering are tested.
+
+## Frontend
+
+- [ ] Frontend test suite runs via `npm run test -w frontend`.
+- [ ] Component and utility tests use Vitest + React Testing Library.
+- [ ] Key UI states (loading, empty, error display) are covered as features are delivered.
 
 ---
 

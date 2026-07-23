@@ -120,4 +120,73 @@ describe("POST /api/tickets", () => {
       details: [{ field: "assignedTo", message: "Invalid assignee" }],
     });
   });
+
+  it("creates a ticket with a valid assignedTo", async () => {
+    const creator = await getSeededUser();
+    const assignee = await getSeededUser("bob.smith@example.com");
+
+    const response = await request(app)
+      .post("/api/tickets")
+      .set("X-User-Id", creator.id)
+      .send({
+        title: "Assigned on create",
+        description: "Ticket starts with an assignee.",
+        priority: "Medium",
+        assignedTo: assignee.id,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.assignedTo).toEqual({
+      id: assignee.id,
+      name: assignee.name,
+    });
+  });
+
+  it("returns 400 for title exceeding max length", async () => {
+    const response = await request(app)
+      .post("/api/tickets")
+      .send({
+        title: "a".repeat(256),
+        description: "Valid description",
+        priority: "Low",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.details).toEqual([
+      {
+        field: "title",
+        message: "title must be at most 255 characters",
+      },
+    ]);
+  });
+
+  it("returns 400 for an invalid X-User-Id format", async () => {
+    const response = await request(app)
+      .post("/api/tickets")
+      .set("X-User-Id", "not-a-uuid")
+      .send({
+        title: "Needs valid user",
+        description: "Header must be a UUID.",
+        priority: "Low",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      error: "Validation failed",
+      details: [{ field: "X-User-Id", message: "Invalid user ID format" }],
+    });
+  });
+
+  it("returns 400 when request body is a JSON array", async () => {
+    const response = await request(app)
+      .post("/api/tickets")
+      .set("Content-Type", "application/json")
+      .send('[{"title":"x"}]');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      error: "Invalid request body",
+      details: [{ field: "body", message: "Request body must be a JSON object" }],
+    });
+  });
 });

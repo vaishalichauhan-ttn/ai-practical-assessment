@@ -10,6 +10,14 @@ vi.mock("./api/tickets.js", () => ({
   updateTicket: vi.fn(),
 }));
 
+vi.mock("./api/client.js", async () => {
+  const actual = await vi.importActual("./api/client.js");
+  return {
+    ...actual,
+    getHealth: vi.fn().mockResolvedValue({ status: "ok" }),
+  };
+});
+
 function renderApp(initialRoute = "/tickets") {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
@@ -31,5 +39,22 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText(/no tickets yet/i)).toBeInTheDocument();
     });
+  });
+
+  it("redirects the root path to tickets", async () => {
+    renderApp("/");
+
+    await waitFor(() => {
+      expect(screen.getByText(/no tickets yet/i)).toBeInTheDocument();
+    });
+  });
+
+  it("renders the home page route", async () => {
+    renderApp("/home");
+
+    expect(
+      await screen.findByRole("heading", { name: /welcome/i })
+    ).toBeInTheDocument();
+    expect(await screen.findByText(/backend status: ok/i)).toBeInTheDocument();
   });
 });

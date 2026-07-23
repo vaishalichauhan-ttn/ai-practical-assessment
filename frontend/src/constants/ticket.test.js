@@ -15,6 +15,10 @@ describe("getNextStatuses", () => {
     expect(getNextStatuses("Closed")).toEqual([]);
     expect(getNextStatuses("Cancelled")).toEqual([]);
   });
+
+  it("returns an empty array for unknown statuses", () => {
+    expect(getNextStatuses("Unknown")).toEqual([]);
+  });
 });
 
 describe("isStatusOptionEnabled", () => {

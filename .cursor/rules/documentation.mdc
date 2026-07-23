@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Documentation Rules
 
-- Add JSDoc comments only where they improve code readability.
+- Add JSDoc comments only for all endponts and where they improve code readability.
 - Document exported functions, classes, controllers, services, repositories, and middleware with non-trivial logic.
 - Do not add JSDoc to simple getters, setters, or obvious private helper functions.
 - Use the following format:

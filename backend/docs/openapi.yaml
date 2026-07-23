@@ -4,6 +4,9 @@ info:
   description: |
     REST API for managing support tickets, comments, and user assignment.
 
+    Source of truth for this contract: project `api-contract.md`.
+    This OpenAPI document mirrors that contract for Swagger UI.
+
     **Scope notes:**
     - Authentication is not implemented; `createdBy` is populated from the `X-User-Id` header or a development stub.
     - Ticket and comment deletion are not supported.
@@ -13,7 +16,7 @@ info:
     name: Support Ticket Management System
 
 servers:
-  - url: http://localhost:3000/api
+  - url: http://localhost:3001/api
     description: Local development server
 
 tags:
@@ -184,17 +187,17 @@ paths:
     get:
       tags: [Tickets]
       summary: Get ticket detail
-      description: Returns full ticket information including comments ordered by `createdAt` ascending.
+      description: Returns full ticket information without comments.
       operationId: getTicketById
       parameters:
         - $ref: "#/components/parameters/TicketId"
       responses:
         "200":
-          description: Ticket detail with comments
+          description: Ticket detail
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TicketDetail"
+                $ref: "#/components/schemas/Ticket"
               example:
                 id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
                 title: Cannot log in to dashboard
@@ -209,21 +212,6 @@ paths:
                   name: Alice Johnson
                 createdAt: "2026-07-23T09:00:00.000Z"
                 updatedAt: "2026-07-23T10:15:00.000Z"
-                comments:
-                  - id: "cccccccc-cccc-cccc-cccc-cccccccccccc"
-                    message: Reset link was expired. Sent a new one.
-                    createdBy:
-                      id: "22222222-2222-2222-2222-222222222222"
-                      name: Bob Smith
-                    createdAt: "2026-07-23T09:30:00.000Z"
-                    updatedAt: "2026-07-23T09:30:00.000Z"
-                  - id: "dddddddd-dddd-dddd-dddd-dddddddddddd"
-                    message: User confirmed login works now.
-                    createdBy:
-                      id: "11111111-1111-1111-1111-111111111111"
-                      name: Alice Johnson
-                    createdAt: "2026-07-23T10:00:00.000Z"
-                    updatedAt: "2026-07-23T10:00:00.000Z"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -321,6 +309,42 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   /tickets/{id}/comments:
+    get:
+      tags: [Comments]
+      summary: List comments
+      description: Returns all comments for a ticket ordered by `createdAt` ascending.
+      operationId: listComments
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+      responses:
+        "200":
+          description: Comment list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                  message: Reset link was expired. Sent a new one.
+                  createdBy:
+                    id: "22222222-2222-2222-2222-222222222222"
+                    name: Bob Smith
+                  createdAt: "2026-07-23T09:30:00.000Z"
+                  updatedAt: "2026-07-23T09:30:00.000Z"
+                - id: "dddddddd-dddd-dddd-dddd-dddddddddddd"
+                  message: User confirmed login works now.
+                  createdBy:
+                    id: "11111111-1111-1111-1111-111111111111"
+                    name: Alice Johnson
+                  createdAt: "2026-07-23T10:00:00.000Z"
+                  updatedAt: "2026-07-23T10:00:00.000Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
     post:
       tags: [Comments]
       summary: Add comment
@@ -537,17 +561,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
-    TicketDetail:
-      allOf:
-        - $ref: "#/components/schemas/Ticket"
-        - type: object
-          required: [comments]
-          properties:
-            comments:
-              type: array
-              items:
-                $ref: "#/components/schemas/Comment"
 
     Comment:
       type: object

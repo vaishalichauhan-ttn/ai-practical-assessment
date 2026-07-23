@@ -65,7 +65,7 @@ The stack below supports layered architecture, fast iteration, and strong integr
 | ORM / migrations | Prisma | Schema versioning, migrations, and seed scripts via `schema.prisma` |
 | Frontend | React + JavaScript + Vite (no TypeScript) | Component-based UI, good form/error handling patterns |
 | API style | REST + JSON | Straightforward CRUD and validation error mapping |
-| Testing | Jest/Vitest + Supertest (API integration tests) | Exercises real HTTP layer and business rules |
+| Testing | Vitest + Supertest (backend API integration tests); Vitest + React Testing Library (frontend component/UI tests) | Exercises real HTTP layer and business rules; frontend tests validate UI behavior with mocked API calls |
 | Documentation | OpenAPI (Swagger) + README | Meets API documentation acceptance criteria |
 
 ### Critical Path Summary
@@ -429,7 +429,7 @@ AI assistance is integrated across the software lifecycle. All AI-generated outp
 | Boilerplate | Scaffold project, routes, repositories | Review structure matches plan |
 | Business logic | Draft `StatusTransitionValidator`, validation helpers | **Manually verify every transition rule** |
 | API endpoints | Generate controller/service/repository stubs | Check HTTP codes and error shapes |
-| Frontend forms | Build forms, API integration, error display | Test all user flows manually |
+| Frontend forms | Build forms, API integration, error display; add React Testing Library tests for key UI states | Test all user flows manually; run `npm run test -w frontend` |
 | Migrations/seeds | Draft Prisma schema and migration/seed files | Run `prisma migrate` and seed on clean DB |
 
 **Prompt location:** `ai-prompts/implementation.md`
@@ -439,7 +439,8 @@ AI assistance is integrated across the software lifecycle. All AI-generated outp
 | Activity | AI Role | Human Responsibility |
 |----------|---------|---------------------|
 | Test cases | Generate transition matrix tests, edge case lists | Ensure every valid/invalid transition is covered |
-| Integration tests | Draft Supertest suites for API endpoints | Run tests in CI/local; fix false positives |
+| Backend integration tests | Draft Supertest suites for API endpoints | Run tests in CI/local; fix false positives |
+| Frontend tests | Draft React Testing Library tests for components and UI states | Run `npm run test -w frontend`; mock API modules, not business rules |
 | Test data | Propose factory/fixture patterns | Keep fixtures minimal and readable |
 
 **Prompt location:** `ai-prompts/testing.md`

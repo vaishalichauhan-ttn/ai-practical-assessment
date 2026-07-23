@@ -129,4 +129,42 @@ describe("api client", () => {
       details: [],
     });
   });
+
+  it("treats malformed JSON bodies as null and still returns success", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      status: 204,
+      headers: {
+        get: () => "application/json",
+      },
+      json: async () => {
+        throw new Error("Unexpected end of JSON input");
+      },
+    });
+
+    await expect(apiRequest("/api/tickets")).resolves.toBeNull();
+  });
+
+  it("exposes getHealth as a convenience wrapper around /api/health", async () => {
+    const { getHealth } = await import("./client.js");
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: {
+        get: () => "application/json",
+      },
+      json: async () => ({ status: "ok" }),
+    });
+
+    await expect(getHealth()).resolves.toEqual({ status: "ok" });
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "/api/health",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Accept: "application/json",
+        }),
+      })
+    );
+  });
 });

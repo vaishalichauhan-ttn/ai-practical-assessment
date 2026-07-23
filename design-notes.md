@@ -47,7 +47,7 @@ The application is a **backend-heavy, full-stack** system for internal users to 
 | Database | PostgreSQL | Relational model fits tickets, users, and comments with foreign-key integrity. Mature, reliable, and well-supported for production-style persistence. |
 | ORM | Prisma | Declarative schema, versioned migrations, seed scripts, and type-safe client generation reduce schema drift and simplify repository implementation. |
 | API style | REST + JSON | Straightforward CRUD mapping, predictable HTTP status codes, and easy integration testing with Supertest. |
-| Testing | Jest/Vitest + Supertest | Exercises the real HTTP layer against a running API, validating business rules end-to-end rather than in isolation. |
+| Testing | Vitest + Supertest (backend API integration tests); Vitest + React Testing Library (frontend component/UI tests) | Backend tests exercise the real HTTP layer against a running API; frontend tests validate rendered UI, routing, and error display without duplicating business-rule enforcement. |
 | API docs | OpenAPI (Swagger) | Meets documentation acceptance criteria and provides a stable contract for frontend integration. |
 
 ### 1.3 Layer Responsibilities
@@ -755,12 +755,15 @@ Tests validate **delivered behavior** against acceptance criteria. Tests are wri
 
 | Type | Scope | Tooling | Priority |
 |------|-------|---------|----------|
-| **Integration tests** | Full HTTP request → response through real API and database | Jest/Vitest + Supertest | **Required** — primary test strategy |
-| **Unit tests** | Pure logic (status transition validator) | Jest/Vitest | **Recommended** for transition matrix |
-| **Smoke tests** | App starts, DB connects, health endpoint returns 200 | Jest/Vitest + Supertest | M0 foundation |
+| **Integration tests** | Full HTTP request → response through real API and database | Vitest + Supertest | **Required** — primary backend test strategy |
+| **Frontend tests** | Component rendering, routing, UI states, and error display | Vitest + React Testing Library (jsdom) | **Required** — complements backend tests for user-facing behavior |
+| **Unit tests** | Pure logic (status transition validator, shared utilities) | Vitest | **Recommended** for transition matrix and frontend helpers |
+| **Smoke tests** | App starts, DB connects, health endpoint returns 200 | Vitest + Supertest | M0 foundation |
 | **Manual acceptance** | Walkthrough against acceptance-criteria checklist | Manual | M7 release validation |
 
-**Why integration tests over heavy unit mocking:** Business rules must be enforced at the API boundary. Integration tests exercise the real service layer, repositories, and database together, catching issues that isolated unit tests might miss (e.g., ORM mapping errors, constraint violations).
+**Why integration tests over heavy unit mocking (backend):** Business rules must be enforced at the API boundary. Integration tests exercise the real service layer, repositories, and database together, catching issues that isolated unit tests might miss (e.g., ORM mapping errors, constraint violations).
+
+**Why React Testing Library (frontend):** Frontend tests focus on what users see and interact with. API modules are mocked so tests stay fast and deterministic; authoritative business rules remain backend-tested via Supertest integration tests.
 
 ### 7.3 Integration Test Coverage by Feature
 
@@ -810,10 +813,11 @@ Both unit tests (validator in isolation) and integration tests (via PATCH endpoi
 
 | Concern | Approach |
 |---------|----------|
-| **Database** | Separate test database (via `DATABASE_URL` in test env) or transaction rollback per test |
+| **Backend database** | Separate test database (via `DATABASE_URL` in test env) or transaction rollback per test |
+| **Frontend runtime** | jsdom via Vitest; mock API client modules in component tests |
 | **Seed data** | Tests use seeded user IDs for assignment and `createdBy` |
 | **Isolation** | Each test creates its own tickets where possible; cleanup between tests |
-| **CI** | Run full test suite on every change; smoke test in M0 |
+| **CI** | Run full backend and frontend test suites on every change; smoke test in M0 |
 
 ### 7.6 Definition of Done (Testing)
 
@@ -821,8 +825,9 @@ A feature is not complete until:
 
 1. Integration test(s) cover the happy path.
 2. Integration test(s) cover key failure cases (400, 404 as applicable).
-3. All previously passing tests still pass (no regressions).
-4. For M4: full status transition matrix is covered by unit and integration tests.
+3. Frontend test(s) cover rendered UI behavior where the feature has user-facing screens or shared utilities.
+4. All previously passing tests still pass (no regressions).
+5. For M4: full status transition matrix is covered by unit and integration tests.
 
 ### 7.7 What Not to Test (Scope Discipline)
 

@@ -631,16 +631,16 @@ In Progress → Cancelled
 
 ---
 
-### Task 5.3 — Include Comments in Ticket Detail
+### Task 5.3 — List Comments for Ticket
 
 | Field | Detail |
 |-------|--------|
 | **Task ID** | 5.3 |
 | **Type** | BE |
-| **Objective** | Return comments as part of `GET /api/tickets/:id`, ordered by `createdAt ASC`. |
+| **Objective** | Expose comments via `GET /api/tickets/:id/comments`, ordered by `createdAt ASC`. |
 | **Dependencies** | 2.2, 5.1 |
-| **Deliverables** | Comments array on ticket detail response; chronological ordering. |
-| **Completion criteria** | Detail response includes comments; oldest comment first; each comment has message, author, timestamps. |
+| **Deliverables** | `GET /api/tickets/:id/comments` endpoint; chronological ordering; ticket detail does not include comments. |
+| **Completion criteria** | List endpoint returns comments for a valid ticket; oldest comment first; each comment has message, author, timestamps; `GET /api/tickets/:id` does not include a comments array. |
 
 ---
 
@@ -653,7 +653,7 @@ In Progress → Cancelled
 | **Objective** | Display comments chronologically on the ticket detail page. |
 | **Dependencies** | 5.3 |
 | **Deliverables** | Comment list component on detail page. |
-| **Completion criteria** | Comments render in chronological order; author and timestamp visible; empty state when no comments. |
+| **Completion criteria** | Comments render in chronological order; author and timestamp visible; comment form available when no comments exist. |
 
 ---
 
@@ -678,7 +678,7 @@ In Progress → Cancelled
 | **Type** | TEST |
 | **Objective** | Verify comment add and list behavior via integration tests. |
 | **Dependencies** | 5.1, 5.2, 5.3 |
-| **Deliverables** | Tests: add comment; list chronologically on detail; 404 for bad ticket id. |
+| **Deliverables** | Tests: add comment; list chronologically via comments endpoint; 404 for bad ticket id. |
 | **Completion criteria** | All comment tests pass; order verified with multiple comments; 404 test passes. |
 
 ---
@@ -846,7 +846,7 @@ In Progress → Cancelled
 
 ---
 
-### Task 7.5 — OpenAPI / Swagger API Documentation
+### Task 7.5 —  Swagger API Documentation
 
 | Field | Detail |
 |-------|--------|
@@ -872,33 +872,7 @@ In Progress → Cancelled
 
 ---
 
-### Task 7.7 — Document Design Decisions
-
-| Field | Detail |
-|-------|--------|
-| **Task ID** | 7.7 |
-| **Type** | DOC |
-| **Objective** | Record architecture, status rules, and scope assumptions for future maintainers. |
-| **Dependencies** | All feature phases |
-| **Deliverables** | Design decisions section in README or separate doc; references to layering, status matrix, out-of-scope items. |
-| **Completion criteria** | Layering explained; status transition rules documented; scope decisions from implementation plan captured. |
-
----
-
-### Task 7.8 — Maintain AI Prompt History
-
-| Field | Detail |
-|-------|--------|
-| **Task ID** | 7.8 |
-| **Type** | DOC |
-| **Objective** | Log significant AI prompts and outcomes per phase in `ai-prompts/`. |
-| **Dependencies** | Ongoing (all phases) |
-| **Deliverables** | Updated files in `ai-prompts/` (planning, design, implementation, testing, documentation). |
-| **Completion criteria** | Each major phase has prompt history entries; prompts linked to decisions or generated artifacts. |
-
----
-
-### Task 7.9 — Full Regression Test Run
+### Task 7.7 — Full Regression Test Run
 
 | Field | Detail |
 |-------|--------|

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ApiError, ERROR_MESSAGES, NetworkError } from "../api/client.js";
@@ -341,6 +341,21 @@ describe("TicketDetailPage", () => {
     expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
   });
 
+  it("shows a generic form error when ticket update fails with a non-API error", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockRejectedValue(new Error("boom"));
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.click(screen.getByRole("button", { name: /edit ticket/i }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(
+      await screen.findByText(/failed to update ticket\. please try again/i)
+    ).toBeInTheDocument();
+  });
+
   it("shows targeted error when assignee list fails to load", async () => {
     listUsers.mockRejectedValue(new ApiError(500, "Internal server error"));
 
@@ -426,6 +441,20 @@ describe("TicketDetailPage", () => {
       await screen.findByText("Cannot transition from Open to In Progress")
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/^status$/i)).toHaveValue("Open");
+  });
+
+  it("shows a generic status error for non-API failures", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockRejectedValue(new Error("boom"));
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/^status$/i), "In Progress");
+
+    expect(
+      await screen.findByText(/failed to update status\. please try again/i)
+    ).toBeInTheDocument();
   });
 
   it("shows inline status field error in edit mode when transition fails", async () => {
@@ -546,6 +575,51 @@ describe("TicketDetailPage", () => {
 
     const commentField = await screen.findByLabelText(/add a comment/i);
     expect(commentField).toHaveAttribute("maxLength", "5000");
+  });
+
+  it("shows client-side validation when a comment exceeds the max length", async () => {
+    const user = userEvent.setup();
+    renderDetailPage();
+
+    const commentField = await screen.findByLabelText(/add a comment/i);
+    fireEvent.change(commentField, {
+      target: { value: "x".repeat(5001) },
+    });
+    await user.click(screen.getByRole("button", { name: /post comment/i }));
+
+    expect(
+      await screen.findByText(/message must be at most 5000 characters/i)
+    ).toBeInTheDocument();
+    expect(addComment).not.toHaveBeenCalled();
+  });
+
+  it("shows a generic comment error for non-API failures", async () => {
+    const user = userEvent.setup();
+    addComment.mockRejectedValue(new Error("boom"));
+
+    renderDetailPage();
+
+    await screen.findByRole("heading", { name: /^comments$/i });
+    await user.type(screen.getByLabelText(/add a comment/i), "Follow-up note");
+    await user.click(screen.getByRole("button", { name: /post comment/i }));
+
+    expect(
+      await screen.findByText(/failed to add comment\. please try again/i)
+    ).toBeInTheDocument();
+  });
+
+  it("shows a generic assignee error for non-API failures", async () => {
+    const user = userEvent.setup();
+    updateTicket.mockRejectedValue(new Error("boom"));
+
+    renderDetailPage();
+
+    await screen.findByText("Cannot log in");
+    await user.selectOptions(screen.getByLabelText(/assignee/i), mockUsers[1].id);
+
+    expect(
+      await screen.findByText(/failed to update assignee\. please try again/i)
+    ).toBeInTheDocument();
   });
 
   it("displays API validation error when comment submission fails", async () => {
