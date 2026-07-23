@@ -433,9 +433,8 @@ Screenshots showing are added in `/demo-screenshots` folder:
 - Ticket List page
 - Create Ticket modal
 - Ticket Details page
-- Ticket assignment
+- Ticket assignment / Comments / Ticket Details page
 - Status transitions
-- Comments
 - Search and filtering
 - Swagger documentation
 
