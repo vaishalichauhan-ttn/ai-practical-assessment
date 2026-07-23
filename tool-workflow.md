@@ -10,7 +10,7 @@ The primary AI tool used for this project was **Cursor AI**. Cursor was used thr
 
 Before each implementation task, the relevant project documentation was provided as the source of truth. Depending on the task, Cursor was instructed to use:
 
-- `development-tasks.md`
+- `tasks.md`
 - `implementation-plan.md`
 - `api-contract.md`
 - `data-model.md`
@@ -89,7 +89,7 @@ Code was not accepted without review.
 
 Testing was performed as part of each implementation phase rather than as a separate activity.
 
-Each implementation prompt included the testing tasks defined for the current phase in `development-tasks.md`, allowing implementation and automated test development to progress together.
+Each implementation prompt included the testing tasks defined for the current phase in `tasks.md`, allowing implementation and automated test development to progress together.
 
 Project Cursor Rules enforced the testing workflow by implementing backend functionality first, followed by backend tests, frontend implementation, and frontend tests.
 

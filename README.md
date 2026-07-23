@@ -425,3 +425,15 @@ Architecture: **Controllers → Services → Repositories → PostgreSQL**. Fron
 - **Ports:** backend `3001`, frontend `5173`, Postgres `5432`. Change via `PORT` / Vite config / `DATABASE_URL` if needed.
 - **Tests need Docker Postgres** (or equivalent) on `localhost:5432` with credentials matching `.env.example`. Backend tests use `support_tickets_test`, not the app database.
 - **Further reading:** [`implementation-plan.md`](implementation-plan.md), [`tool-specific/cursor-workflow/project-context.md`](tool-specific/cursor-workflow/project-context.md), [`acceptance-criteria.md`](acceptance-criteria.md).
+
+
+## Future Enhancements
+
+Potential future enhancements include:
+
+- Role-based authentication and authorization
+- Pagination for large ticket lists
+- Comment editing and deletion
+- Advanced filtering and sorting
+- CI/CD pipeline for automated builds and testing
+- API versioning

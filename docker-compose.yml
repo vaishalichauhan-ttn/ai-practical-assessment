@@ -34,6 +34,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      # Node 20 Alpine has no curl; use built-in fetch against the app health endpoint.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # Allow migrate + seed in docker-entrypoint.sh before counting failures.
+      start_period: 40s
     networks:
       - app-network
 
@@ -48,7 +62,8 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app-network
 

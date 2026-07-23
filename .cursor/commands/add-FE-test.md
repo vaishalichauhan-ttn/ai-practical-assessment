@@ -2,7 +2,7 @@ Add frontend automated tests for the implemented feature.
 
 Use the following documents as the source of truth:
 
-- development-tasks.md
+- tasks.md
 - acceptance-criteria.md
 - api-contract.md
 
