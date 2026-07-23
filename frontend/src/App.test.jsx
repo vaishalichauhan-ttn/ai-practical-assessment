@@ -7,6 +7,7 @@ vi.mock("./api/tickets.js", () => ({
   listTickets: vi.fn().mockResolvedValue([]),
   getTicket: vi.fn(),
   createTicket: vi.fn(),
+  updateTicket: vi.fn(),
 }));
 
 function renderApp(initialRoute = "/tickets") {

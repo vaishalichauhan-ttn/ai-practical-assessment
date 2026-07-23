@@ -10,6 +10,13 @@ export interface CreateTicketData {
   assignedTo: string | null;
 }
 
+export interface UpdateTicketData {
+  title?: string;
+  description?: string;
+  priority?: Priority;
+  assignedTo?: string | null;
+}
+
 const ticketInclude = {
   creator: {
     select: { id: true, name: true },
@@ -50,6 +57,22 @@ export const ticketRepository = {
     return prisma.ticket.findUnique({
       where: { id },
       include: ticketDetailInclude,
+    });
+  },
+
+  async existsById(id: string) {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    return ticket !== null;
+  },
+
+  async update(id: string, data: UpdateTicketData) {
+    return prisma.ticket.update({
+      where: { id },
+      data,
+      include: ticketInclude,
     });
   },
 };

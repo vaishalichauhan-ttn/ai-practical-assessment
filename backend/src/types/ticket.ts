@@ -7,6 +7,13 @@ export interface CreateTicketInput {
   assignedTo?: string | null;
 }
 
+export interface UpdateTicketInput {
+  title?: string;
+  description?: string;
+  priority?: Priority;
+  assignedTo?: string | null;
+}
+
 export interface UserRefDto {
   id: string;
   name: string;

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "../api/client.js";
 import { createTicket } from "../api/tickets.js";
-
-const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"];
+import { PRIORITY_OPTIONS } from "../constants/ticket.js";
 
 const EMPTY_FORM = {
   title: "",

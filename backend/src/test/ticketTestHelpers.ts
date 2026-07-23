@@ -30,6 +30,7 @@ export async function createTestTicket(
     title?: string;
     description?: string;
     priority?: "Low" | "Medium" | "High" | "Critical";
+    status?: "Open" | "InProgress" | "Resolved" | "Closed" | "Cancelled";
     assignedTo?: string | null;
     createdBy?: string;
   } = {}
@@ -41,7 +42,7 @@ export async function createTestTicket(
       title: overrides.title ?? "Test ticket",
       description: overrides.description ?? "Test description",
       priority: overrides.priority ?? "Medium",
-      status: "Open",
+      status: overrides.status ?? "Open",
       createdBy: overrides.createdBy ?? user.id,
       assignedTo: overrides.assignedTo ?? null,
     },

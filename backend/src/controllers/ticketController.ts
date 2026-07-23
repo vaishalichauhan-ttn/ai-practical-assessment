@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import type { Priority } from "@prisma/client";
 import { NotFoundError } from "../errors/AppError.js";
 import { ticketService } from "../services/ticketService.js";
-import type { CreateTicketInput } from "../types/ticket.js";
+import type { CreateTicketInput, UpdateTicketInput } from "../types/ticket.js";
 
 export async function createTicket(
   req: Request,
@@ -55,6 +55,35 @@ export async function getTicket(
     }
 
     const ticket = await ticketService.getById(id);
+    res.status(200).json(ticket);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Partially updates ticket fields (title, description, priority, assignedTo).
+ */
+export async function updateTicket(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const id = req.params.id;
+    if (!id || Array.isArray(id)) {
+      throw new NotFoundError("Ticket not found");
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const input: UpdateTicketInput = {
+      title: body.title as string | undefined,
+      description: body.description as string | undefined,
+      priority: body.priority as Priority | undefined,
+      assignedTo: body.assignedTo as string | null | undefined,
+    };
+
+    const ticket = await ticketService.update(id, body, input);
     res.status(200).json(ticket);
   } catch (error) {
     next(error);
