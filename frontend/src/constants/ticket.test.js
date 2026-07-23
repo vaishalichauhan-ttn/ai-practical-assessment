@@ -1,8 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
+  DEFAULT_USER_EMAIL,
   getNextStatuses,
   isStatusOptionEnabled,
 } from "./ticket.js";
+
+describe("DEFAULT_USER_EMAIL", () => {
+  it("matches the backend seeded default user email", () => {
+    expect(DEFAULT_USER_EMAIL).toBe("alice.johnson@example.com");
+  });
+});
 
 describe("getNextStatuses", () => {
   it("returns allowed next statuses for each workflow state", () => {

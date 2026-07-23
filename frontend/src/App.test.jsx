@@ -1,13 +1,18 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "./App.jsx";
+import { listUsers } from "./api/users.js";
 
 vi.mock("./api/tickets.js", () => ({
   listTickets: vi.fn().mockResolvedValue([]),
   getTicket: vi.fn(),
   createTicket: vi.fn(),
   updateTicket: vi.fn(),
+}));
+
+vi.mock("./api/users.js", () => ({
+  listUsers: vi.fn(),
 }));
 
 vi.mock("./api/client.js", async () => {
@@ -18,6 +23,13 @@ vi.mock("./api/client.js", async () => {
   };
 });
 
+const defaultUser = {
+  id: "user-1",
+  name: "Alice Johnson",
+  email: "alice.johnson@example.com",
+  role: "support_agent",
+};
+
 function renderApp(initialRoute = "/tickets") {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
@@ -27,6 +39,10 @@ function renderApp(initialRoute = "/tickets") {
 }
 
 describe("App", () => {
+  beforeEach(() => {
+    listUsers.mockResolvedValue([defaultUser]);
+  });
+
   it("renders the application header and navigation", async () => {
     renderApp();
 
@@ -39,6 +55,16 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText(/no tickets yet/i)).toBeInTheDocument();
     });
+  });
+
+  it("shows the default user used to create tickets", async () => {
+    renderApp();
+
+    expect(await screen.findByText("Alice Johnson")).toBeInTheDocument();
+    expect(
+      screen.getByText("alice.johnson@example.com")
+    ).toBeInTheDocument();
+    expect(listUsers).toHaveBeenCalled();
   });
 
   it("redirects the root path to tickets", async () => {

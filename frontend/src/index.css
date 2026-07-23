@@ -31,7 +31,15 @@ a:hover {
 }
 
 .app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+.app-header-main {
+  min-width: 0;
 }
 
 .app-header h1 {
@@ -42,6 +50,36 @@ a:hover {
 .app-nav {
   display: flex;
   gap: 1rem;
+}
+
+.app-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.app-user-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.app-user-email {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-user {
+    align-items: flex-start;
+    text-align: left;
+  }
 }
 
 .card {

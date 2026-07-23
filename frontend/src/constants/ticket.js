@@ -1,3 +1,6 @@
+/** Email of the seeded user used when creating tickets (matches backend default). */
+export const DEFAULT_USER_EMAIL = "alice.johnson@example.com";
+
 export const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"];
 
 export const TICKET_STATUSES = [
